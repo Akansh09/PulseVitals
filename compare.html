@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>PulseVitals — Competitor comparison</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --fg: #0F172A; --muted: #475569; --bg: #FFFFFF; --bg-subtle: #F5F7FA;
+      --border: #E2E8F0; --accent: #E11D48;
+      --good: #16A34A; --warn: #D97706; --bad: #DC2626;
+      color-scheme: light dark;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --fg: #E6EDF3; --muted: #94A3B8; --bg: #0B0F14; --bg-subtle: #131820; --border: #1F2933; }
+    }
+    * { box-sizing: border-box; }
+    html, body { background: var(--bg); color: var(--fg); }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      max-width: 960px; margin: 32px auto; padding: 0 24px;
+    }
+    h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 4px; }
+    .meta { color: var(--muted); font-size: 0.9rem; margin: 0 0 24px; }
+    .inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    @media (max-width: 640px) { .inputs { grid-template-columns: 1fr; } }
+    .input-cell label { display: block; font-size: 0.75rem; font-weight: 600;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    input[type=url] {
+      width: 100%; font: inherit; font-size: 0.9rem; padding: 8px 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      border: 1px solid var(--border); border-radius: 4px;
+      background: var(--bg-subtle); color: inherit;
+    }
+    .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+    .btn { font: inherit; font-size: 0.9rem; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+    .btn-primary { background: var(--accent); color: #FFFFFF; border: none; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+    .progress { font-size: 0.85rem; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 16px; }
+    th { text-align: left; padding: 10px 6px; font-weight: 600; color: var(--muted);
+      border-bottom: 1px solid var(--border); font-size: 0.75rem;
+      text-transform: uppercase; letter-spacing: 0.05em; }
+    th.num { text-align: right; }
+    td { padding: 10px 6px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    td.num { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; text-align: right; }
+    td.url { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; max-width: 260px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    td.winner { color: var(--good); font-weight: 600; }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+    .dot.good { background: var(--good); }
+    .dot.warn { background: var(--warn); }
+    .dot.bad { background: var(--bad); }
+    .dot.none { background: #94A3B8; }
+    .empty { padding: 60px 20px; text-align: center; color: var(--muted); font-size: 0.9rem; }
+    :focus-visible { outline: 2px solid rgba(225, 29, 72, 0.6); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Competitor comparison</h1>
+    <p class="meta">Measure your site against up to three competitors. PulseVitals loads each URL in a background tab, captures Core Web Vitals + total transfer, and highlights the winner per metric.</p>
+
+    <div class="inputs">
+      <div class="input-cell">
+        <label for="url-you">You</label>
+        <input type="url" id="url-you" placeholder="https://you.example.com">
+      </div>
+      <div class="input-cell">
+        <label for="url-a">Competitor 1</label>
+        <input type="url" id="url-a" placeholder="https://competitor-a.com">
+      </div>
+      <div class="input-cell">
+        <label for="url-b">Competitor 2</label>
+        <input type="url" id="url-b" placeholder="https://competitor-b.com">
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-primary" id="compare">Compare</button>
+      <button class="btn btn-ghost" id="share-png" disabled>Share comparison (PNG)</button>
+      <span class="progress" id="progress"></span>
+    </div>
+
+    <div id="results-wrap" hidden>
+      <table>
+        <thead>
+          <tr>
+            <th>Site</th>
+            <th>Verdict</th>
+            <th class="num">LCP (ms)</th>
+            <th class="num">CLS</th>
+            <th class="num">INP (ms)</th>
+            <th class="num">Total transfer</th>
+          </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty">Enter at least two URLs and click <strong>Compare</strong>.</div>
+    <canvas id="png-canvas" width="1200" height="630" style="display:none;"></canvas>
+  </main>
+  <script src="compare.js"></script>
+</body>
+</html>

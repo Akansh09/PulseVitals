@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>PulseVitals — Options</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --fg: #0F172A;
+      --muted: #475569;
+      --bg: #FFFFFF;
+      --bg-subtle: #F5F7FA;
+      --border: #E2E8F0;
+      --accent: #E11D48;
+      color-scheme: light dark;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --fg: #E6EDF3; --muted: #94A3B8; --bg: #0B0F14; --bg-subtle: #131820; --border: #1F2933; }
+    }
+    * { box-sizing: border-box; }
+    html, body { background: var(--bg); color: var(--fg); }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      max-width: 720px; margin: 32px auto; padding: 0 24px;
+    }
+    h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 4px; }
+    .meta { color: var(--muted); font-size: 0.85rem; margin: 0 0 32px; }
+    h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--muted); font-weight: 600; margin: 28px 0 8px; }
+    main { padding-bottom: 48px; }
+    .opt-row { display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 0; border-bottom: 1px solid var(--border); gap: 16px; }
+    .opt-row:last-child { border-bottom: none; }
+    .opt-label { font-weight: 600; font-size: 0.95rem; }
+    .opt-desc { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+    .opt-control { flex-shrink: 0; }
+    .toggle {
+      width: 40px; height: 22px; background: #CBD5E1; border-radius: 11px; position: relative;
+      cursor: pointer; border: none; padding: 0; flex-shrink: 0;
+    }
+    .toggle.on { background: var(--accent); }
+    .toggle::before { content: ""; position: absolute; width: 18px; height: 18px; background: #FFFFFF;
+      border-radius: 50%; top: 2px; left: 2px; transition: left 0.15s; }
+    .toggle.on::before { left: 20px; }
+    input[type=number], input[type=text], textarea {
+      font: inherit; font-size: 0.85rem; padding: 6px 10px;
+      border: 1px solid var(--border); border-radius: 4px;
+      background: var(--bg-subtle); color: inherit; width: 140px;
+    }
+    textarea { width: 100%; min-height: 80px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.8rem; line-height: 1.5; resize: vertical; margin-top: 8px; }
+    .textarea-row { flex-direction: column; align-items: flex-start; }
+    .btn {
+      font: inherit; font-size: 0.85rem; padding: 7px 16px;
+      border-radius: 4px; border: 1px solid var(--accent); background: transparent;
+      color: var(--accent); cursor: pointer;
+    }
+    .btn-danger { color: var(--accent); }
+    .btn-primary { background: var(--accent); color: #FFFFFF; }
+    .saved-indicator {
+      font-size: 0.75rem; color: #16A34A; opacity: 0; transition: opacity 0.2s; margin-left: 12px;
+    }
+    .saved-indicator.show { opacity: 1; }
+    footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border);
+      color: var(--muted); font-size: 0.8rem; }
+    footer a { color: var(--accent); text-decoration: none; }
+    :focus-visible { outline: 2px solid rgba(225, 29, 72, 0.6); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>PulseVitals Options</h1>
+    <p class="meta">Preferences sync across Chrome profiles signed in with the same Google account. History data stays on this device.</p>
+
+    <h2>Measurement</h2>
+    <div class="opt-row">
+      <div>
+        <div class="opt-label">Auto-measure on every page load</div>
+        <div class="opt-desc">Captures CWV + timings silently; popup reads cached data. Off means the popup shows "measuring…" until you interact.</div>
+      </div>
+      <button class="toggle on" id="toggle-automeasure" aria-label="Auto-measure" role="switch" aria-checked="true"></button>
+    </div>
+    <div class="opt-row">
+      <div>
+        <div class="opt-label">Mobile-default emulation</div>
+        <div class="opt-desc">Always re-run reports under a mobile viewport (375 px) + CPU throttle. Approximate — content scripts can't truly throttle.</div>
+      </div>
+      <button class="toggle" id="toggle-mobile" aria-label="Mobile emulation default" role="switch" aria-checked="false"></button>
+    </div>
+    <div class="opt-row">
+      <div>
+        <div class="opt-label">Show platform-aware tips</div>
+        <div class="opt-desc">Detect Shopify / WordPress / Webflow / Next.js and append platform-specific fix recipes in the Insights section.</div>
+      </div>
+      <button class="toggle on" id="toggle-platform" aria-label="Platform tips" role="switch" aria-checked="true"></button>
+    </div>
+    <div class="opt-row">
+      <div>
+        <div class="opt-label">Show SEO checks</div>
+        <div class="opt-desc">Adds a Popup section with on-page SEO heuristics (title, meta, H1, canonical, OG, viewport, JSON-LD).</div>
+      </div>
+      <button class="toggle on" id="toggle-seo" aria-label="SEO checks" role="switch" aria-checked="true"></button>
+    </div>
+    <div class="opt-row">
+      <div>
+        <div class="opt-label">Show accessibility score</div>
+        <div class="opt-desc">Runs a bundled 8-rule axe-lite check and shows a combined 0–100 Health Score.</div>
+      </div>
+      <button class="toggle on" id="toggle-axe" aria-label="Accessibility checks" role="switch" aria-checked="true"></button>
+    </div>
+    <div class="opt-row">
+      <div>
+        <div class="opt-label">Pin overlay on page</div>
+        <div class="opt-desc">Floating CWV badge in the bottom-right of every page (Shadow-DOM, doesn't affect page styles). Dismissible per-tab with ×.</div>
+      </div>
+      <button class="toggle" id="toggle-pin" aria-label="Pin overlay" role="switch" aria-checked="false"></button>
+    </div>
+
+    <h2>Per-site denylist</h2>
+    <div class="opt-row textarea-row">
+      <div>
+        <div class="opt-label">Origins to skip</div>
+        <div class="opt-desc">One per line. PulseVitals will not measure or appear on these origins.</div>
+      </div>
+      <textarea id="denylist" placeholder="https://banking.example.com&#10;https://admin.internal"></textarea>
+    </div>
+
+    <h2>Performance budgets</h2>
+    <div class="opt-row">
+      <div>
+        <div class="opt-label">LCP budget (ms)</div>
+        <div class="opt-desc">Desktop alert fires when LCP exceeds this. Default 2,500 ms (Google's "Good" threshold).</div>
+      </div>
+      <input id="budget-lcp" type="number" min="0" step="100" value="2500">
+    </div>
+    <div class="opt-row">
+      <div>
+        <div class="opt-label">CLS budget</div>
+        <div class="opt-desc">Alert when CLS exceeds this. Default 0.10.</div>
+      </div>
+      <input id="budget-cls" type="number" min="0" step="0.01" value="0.10">
+    </div>
+    <div class="opt-row">
+      <div>
+        <div class="opt-label">INP budget (ms)</div>
+        <div class="opt-desc">Alert when INP exceeds this. Default 200 ms.</div>
+      </div>
+      <input id="budget-inp" type="number" min="0" step="10" value="200">
+    </div>
+    <div class="opt-row">
+      <div>
+        <div class="opt-label">Desktop alerts when budget is exceeded</div>
+        <div class="opt-desc">Requires the Chrome <code>notifications</code> permission; granted on first alert.</div>
+      </div>
+      <button class="toggle" id="toggle-alerts" aria-label="Budget alerts" role="switch" aria-checked="false"></button>
+    </div>
+
+    <h2>Reporting</h2>
+    <div class="opt-row">
+      <div>
+        <div class="opt-label">Report-an-issue URL</div>
+        <div class="opt-desc">Where the popup footer's "Report an issue" link points. Defaults to PulseVitals support.</div>
+      </div>
+      <input id="bug-url" type="text" style="width: 240px;" placeholder="https://pulsevitals.app/feedback">
+    </div>
+
+    <h2>Data</h2>
+    <div class="opt-row">
+      <div>
+        <div class="opt-label">Clear history</div>
+        <div class="opt-desc">Removes every stored snapshot across every origin. Preferences above are kept.</div>
+      </div>
+      <button class="btn btn-danger" id="clear-history" type="button">Clear…</button>
+    </div>
+    <div class="opt-row">
+      <div>
+        <div class="opt-label">Reset consent banner</div>
+        <div class="opt-desc">Shows the first-install consent card on next popup open. Useful for testing.</div>
+      </div>
+      <button class="btn" id="reset-consent" type="button">Reset</button>
+    </div>
+
+    <footer>
+      Saved automatically · Changes apply on next popup open ·
+      <a href="privacy.html" target="_blank">Privacy policy</a> ·
+      <a href="terms.html" target="_blank">Terms</a>
+      <span class="saved-indicator" id="saved">Saved ✓</span>
+    </footer>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>

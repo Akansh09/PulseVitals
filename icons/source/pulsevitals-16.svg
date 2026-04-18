@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" aria-label="PulseVitals">
+  <rect width="16" height="16" rx="3" fill="#E11D48"/>
+  <path d="M 2 8 L 5 8 L 7 3 L 9 13 L 11 8 L 14 8"
+        stroke="#FFFFFF"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        fill="none"/>
+</svg>

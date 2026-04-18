@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PulseVitals — Popup UI Mock (seed #2)</title>
+<style>
+  :root {
+    --page-bg: #F5F5F7;
+    --page-fg: #0F172A;
+    --page-muted: #475569;
+    --page-border: #E2E8F0;
+  }
+  [data-theme="dark"] {
+    --page-bg: #0A0A0C;
+    --page-fg: #E6EDF3;
+    --page-muted: #94A3B8;
+    --page-border: #1F2933;
+  }
+  html { background: var(--page-bg); }
+  body {
+    margin: 0; padding: 32px;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--page-bg);
+    color: var(--page-fg);
+  }
+  .page { max-width: 1280px; margin: 0 auto; }
+  h1.title { font-size: 1.5rem; margin: 0 0 4px; font-weight: 600; }
+  p.intro { color: var(--page-muted); margin: 0 0 24px; font-size: 0.875rem; max-width: 760px; }
+  .toolbar { margin-bottom: 24px; display: flex; gap: 8px; }
+  .toolbar button {
+    padding: 6px 12px;
+    border: 1px solid var(--page-border);
+    background: transparent;
+    color: var(--page-fg);
+    cursor: pointer;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 0.875rem;
+  }
+  .toolbar button:hover { border-color: var(--page-muted); }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 380px);
+    gap: 32px;
+  }
+  .card-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--page-muted);
+    margin-bottom: 8px;
+  }
+  .popup-frame {
+    width: 380px; height: 520px;
+    border: 1px solid var(--page-border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    background: #FFFFFF;
+  }
+  [data-theme="dark"] .popup-frame { background: #0B0F14; }
+
+  /* -------- Popup — real design-system tokens -------- */
+  .popup {
+    width: 100%; height: 100%;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #0F172A; background: #FFFFFF;
+    display: flex; flex-direction: column;
+    box-sizing: border-box;
+  }
+  [data-theme="dark"] .popup { color: #E6EDF3; background: #0B0F14; }
+  .popup header {
+    height: 48px; padding: 0 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid #E2E8F0;
+  }
+  [data-theme="dark"] .popup header { border-bottom-color: #1F2933; }
+  .popup h1 { margin: 0; font-size: 1.125rem; font-weight: 600; color: inherit; }
+  .popup .subhead {
+    padding: 12px 16px 4px;
+    margin: 0; font-size: 0.875rem; color: #475569;
+  }
+  [data-theme="dark"] .popup .subhead { color: #94A3B8; }
+  .popup .urlbar {
+    margin: 4px 16px 12px; padding: 6px 8px;
+    background: #F5F7FA; border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75rem; color: #475569;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  [data-theme="dark"] .popup .urlbar { background: #131820; color: #94A3B8; }
+  .popup .body { flex: 1; overflow-y: auto; padding: 0 16px; }
+  .popup table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  .popup th {
+    text-align: left; padding: 8px 4px;
+    font-weight: 600; color: #475569;
+    border-bottom: 1px solid #E2E8F0;
+    position: sticky; top: 0; background: #FFFFFF;
+  }
+  [data-theme="dark"] .popup th { color: #94A3B8; border-bottom-color: #1F2933; background: #0B0F14; }
+  .popup th.num, .popup td.num {
+    text-align: right;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .popup td { padding: 6px 4px; border-bottom: 1px solid #E2E8F0; }
+  [data-theme="dark"] .popup td { border-bottom-color: #1F2933; }
+  .popup tr:last-child td { border-bottom: none; }
+  .popup .state {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    color: #475569; font-size: 0.875rem;
+    padding: 16px 32px; line-height: 1.5;
+  }
+  [data-theme="dark"] .popup .state { color: #94A3B8; }
+  .popup footer {
+    height: 24px; padding: 0 16px;
+    display: flex; align-items: center; justify-content: flex-end;
+    border-top: 1px solid #E2E8F0;
+  }
+  [data-theme="dark"] .popup footer { border-top-color: #1F2933; }
+  .popup .version { font-size: 0.75rem; color: #475569; }
+  [data-theme="dark"] .popup .version { color: #94A3B8; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <h1 class="title">PulseVitals — Popup UI Mock (seed #2)</h1>
+    <p class="intro">
+      Each frame below is rendered at the exact Chrome popup dimensions (380 × 520 px) that
+      the final extension will use. All styles reference tokens from
+      <code>agent/design-system.md</code>. Toggle dark / light to verify the
+      <code>prefers-color-scheme</code> variant.
+    </p>
+    <div class="toolbar">
+      <button id="theme-toggle">Toggle dark / light</button>
+    </div>
+
+    <div class="grid">
+
+      <!-- SUCCESS -->
+      <div>
+        <div class="card-label">Success</div>
+        <div class="popup-frame">
+          <div class="popup">
+            <header><h1>PulseVitals</h1></header>
+            <p class="subhead">Performance for this page</p>
+            <div class="urlbar">example.com/a/long/path/to/page.html</div>
+            <div class="body">
+              <table>
+                <thead>
+                  <tr><th>Event</th><th class="num">Time</th><th class="num">Δ (ms)</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>navigationStart</td><td class="num">10:42:18.321</td><td class="num">0</td></tr>
+                  <tr><td>fetchStart</td><td class="num">10:42:18.324</td><td class="num">3</td></tr>
+                  <tr><td>domainLookupStart</td><td class="num">10:42:18.327</td><td class="num">6</td></tr>
+                  <tr><td>domainLookupEnd</td><td class="num">10:42:18.332</td><td class="num">11</td></tr>
+                  <tr><td>connectStart</td><td class="num">10:42:18.332</td><td class="num">11</td></tr>
+                  <tr><td>connectEnd</td><td class="num">10:42:18.341</td><td class="num">20</td></tr>
+                  <tr><td>requestStart</td><td class="num">10:42:18.341</td><td class="num">20</td></tr>
+                  <tr><td>responseStart</td><td class="num">10:42:18.497</td><td class="num">176</td></tr>
+                  <tr><td>responseEnd</td><td class="num">10:42:18.612</td><td class="num">291</td></tr>
+                  <tr><td>domLoading</td><td class="num">10:42:18.628</td><td class="num">307</td></tr>
+                  <tr><td>domInteractive</td><td class="num">10:42:18.901</td><td class="num">580</td></tr>
+                  <tr><td>domContentLoadedEventStart</td><td class="num">10:42:18.904</td><td class="num">583</td></tr>
+                  <tr><td>domContentLoadedEventEnd</td><td class="num">10:42:18.912</td><td class="num">591</td></tr>
+                  <tr><td>domComplete</td><td class="num">10:42:19.104</td><td class="num">783</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <footer><span class="version">v1.3</span></footer>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOADING -->
+      <div>
+        <div class="card-label">Loading</div>
+        <div class="popup-frame">
+          <div class="popup">
+            <header><h1>PulseVitals</h1></header>
+            <p class="subhead">Performance for this page</p>
+            <div class="urlbar">example.com/a/long/path/to/page.html</div>
+            <div class="state" role="status" aria-live="polite">Measuring…</div>
+            <footer><span class="version">v1.3</span></footer>
+          </div>
+        </div>
+      </div>
+
+      <!-- EMPTY -->
+      <div>
+        <div class="card-label">Empty / no data yet</div>
+        <div class="popup-frame">
+          <div class="popup">
+            <header><h1>PulseVitals</h1></header>
+            <p class="subhead">Performance for this page</p>
+            <div class="urlbar" style="opacity:0.5">—</div>
+            <div class="state" role="status" aria-live="polite">No performance data yet.<br>Navigate to a web page and reopen.</div>
+            <footer><span class="version">v1.3</span></footer>
+          </div>
+        </div>
+      </div>
+
+      <!-- UNSUPPORTED -->
+      <div>
+        <div class="card-label">Unsupported URL</div>
+        <div class="popup-frame">
+          <div class="popup">
+            <header><h1>PulseVitals</h1></header>
+            <p class="subhead">Performance for this page</p>
+            <div class="urlbar">chrome://extensions</div>
+            <div class="state" role="status" aria-live="polite">PulseVitals can't read this page type.</div>
+            <footer><span class="version">v1.3</span></footer>
+          </div>
+        </div>
+      </div>
+
+      <!-- ERROR -->
+      <div>
+        <div class="card-label">Error</div>
+        <div class="popup-frame">
+          <div class="popup">
+            <header><h1>PulseVitals</h1></header>
+            <p class="subhead">Performance for this page</p>
+            <div class="urlbar">example.com/broken</div>
+            <div class="state" role="status" aria-live="polite">Couldn't load timings for this tab.<br>Try reloading the page.</div>
+            <footer><span class="version">v1.3</span></footer>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const root = document.documentElement;
+    const btn = document.getElementById("theme-toggle");
+    // Respect OS preference on load.
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      root.dataset.theme = "dark";
+    }
+    btn.addEventListener("click", () => {
+      root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>PulseVitals — Privacy policy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      max-width: 720px; margin: 40px auto; padding: 0 24px; line-height: 1.6; color: #0F172A; }
+    h1 { font-size: 1.75rem; margin: 0 0 8px; }
+    h2 { font-size: 0.8rem; margin: 28px 0 8px; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; }
+    p { margin: 0 0 12px; }
+    code { background: #F5F7FA; padding: 1px 6px; border-radius: 3px; font-size: 0.9em; }
+    .meta { color: #475569; font-size: 0.9rem; margin-bottom: 32px; }
+    footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #E2E8F0;
+      color: #475569; font-size: 0.85rem; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #0B0F14; color: #E6EDF3; }
+      code { background: #131820; }
+      h2, .meta, footer { color: #94A3B8; }
+      footer { border-top-color: #1F2933; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Privacy policy</h1>
+  <p class="meta">Last updated: 2026-04-18 · Version 1</p>
+
+  <h2>Summary</h2>
+  <p>PulseVitals is a browser extension that measures the performance of pages you visit. It runs on your device only. It does not send your data to any server. It never has.</p>
+
+  <h2>What we collect</h2>
+  <p>When you have an active tab open and the extension is installed, PulseVitals observes the browser's built-in performance APIs for that tab. We read:</p>
+  <ul>
+    <li>Navigation timing (<code>navigationStart</code> → <code>domComplete</code>).</li>
+    <li>Paint timing and Core Web Vitals (<code>first-paint</code>, <code>first-contentful-paint</code>, <code>largest-contentful-paint</code>, <code>CLS</code>, <code>INP</code>).</li>
+    <li>Resources your page loads (URL, transfer size, duration, initiator type) via <code>performance.getEntriesByType("resource")</code>.</li>
+    <li>Storage usage estimate for the active tab's origin via <code>navigator.storage.estimate()</code>, plus byte counts of <code>localStorage</code> and <code>sessionStorage</code>.</li>
+    <li>On-page SEO signals (<code>&lt;title&gt;</code>, <code>&lt;meta name="description"&gt;</code>, <code>&lt;h1&gt;</code> count, canonical URL, Open Graph image, viewport meta, JSON-LD) when the SEO checks feature is enabled.</li>
+    <li>Accessibility violations from a bundled minimal axe-core rule set when the a11y score feature is enabled.</li>
+  </ul>
+
+  <h2>What we store</h2>
+  <p>Measurement snapshots are stored locally using Chrome's built-in storage APIs:</p>
+  <ul>
+    <li><code>chrome.storage.local</code> — up to 10 snapshots per origin you visit; roughly 2 KB per snapshot. Used for the history view and RUM histograms.</li>
+    <li><code>chrome.storage.sync</code> — your Options preferences (auto-measure toggle, mobile-default toggle, platform tips toggle, denylist, budgets). Roams across Chrome profiles signed into your Google account.</li>
+  </ul>
+  <p>Everything above lives on your device (and, for <code>sync</code> data, Chrome's syncing infrastructure managed by Google under their own policy).</p>
+
+  <h2>What we do not do</h2>
+  <ul>
+    <li>No data is sent to any PulseVitals server. There is no PulseVitals server.</li>
+    <li>No telemetry. We do not know whether you installed, uninstalled, or used the extension.</li>
+    <li>No crash reporting. If it crashes on your machine, we do not find out.</li>
+    <li>No third-party analytics, tag managers, advertising pixels, or A/B testing libraries are loaded by the extension.</li>
+    <li>No cross-origin reads: the content script reads performance APIs for the active tab's own origin, nothing else.</li>
+  </ul>
+
+  <h2>What leaves your device</h2>
+  <p>Only when you explicitly act:</p>
+  <ul>
+    <li><strong>Export</strong> writes a JSON and CSV to your Downloads folder.</li>
+    <li><strong>Share</strong> writes a self-contained HTML report to your Downloads folder. Whether you email or upload that file is your decision.</li>
+  </ul>
+
+  <h2>Permissions</h2>
+  <p>Each Chrome permission the extension requests is justified in <code>docs/permissions.md</code> in the source repository. The permission list is: <code>storage</code>, <code>activeTab</code>, <code>tabs</code>, and (optionally, when you enable budget alerts) <code>notifications</code>.</p>
+
+  <h2>Your controls</h2>
+  <ul>
+    <li>The Options page has a <em>Clear history</em> button that removes every stored snapshot.</li>
+    <li>Uninstalling the extension removes all locally-stored data.</li>
+    <li>Disabling auto-measure from Options stops capture without uninstalling.</li>
+    <li>The denylist in Options prevents measurement on specific origins entirely.</li>
+  </ul>
+
+  <h2>Changes to this policy</h2>
+  <p>Material changes will be announced in the extension's "What's new" card on the next version update, and the <em>Last updated</em> date above will change.</p>
+
+  <h2>Contact</h2>
+  <p>For privacy questions, open an issue via the <em>Report an issue</em> link in the extension popup.</p>
+
+  <footer>PulseVitals · Measuring the web, not you.</footer>
+</body>
+</html>

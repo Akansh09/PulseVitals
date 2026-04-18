@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>PulseVitals — Batch audit</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --fg: #0F172A; --muted: #475569; --bg: #FFFFFF; --bg-subtle: #F5F7FA;
+      --border: #E2E8F0; --accent: #E11D48;
+      --good: #16A34A; --warn: #D97706; --bad: #DC2626;
+      color-scheme: light dark;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --fg: #E6EDF3; --muted: #94A3B8; --bg: #0B0F14; --bg-subtle: #131820; --border: #1F2933; }
+    }
+    * { box-sizing: border-box; }
+    html, body { background: var(--bg); color: var(--fg); }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      max-width: 1000px; margin: 32px auto; padding: 0 24px;
+    }
+    h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 4px; }
+    .meta { color: var(--muted); font-size: 0.9rem; margin: 0 0 24px; }
+    .input-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    textarea {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.85rem; min-height: 140px; padding: 10px 12px;
+      border: 1px solid var(--border); background: var(--bg-subtle);
+      color: inherit; border-radius: 6px; resize: vertical;
+    }
+    .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .btn { font: inherit; font-size: 0.9rem; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+    .btn-primary { background: var(--accent); color: #FFFFFF; border: none; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+    .progress { font-size: 0.85rem; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 8px; }
+    th {
+      text-align: left; padding: 10px 6px; font-weight: 600; color: var(--muted);
+      border-bottom: 1px solid var(--border); font-size: 0.75rem;
+      text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; user-select: none;
+    }
+    th:hover { color: var(--fg); }
+    th.num { text-align: right; }
+    td { padding: 10px 6px; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
+    td.num { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; text-align: right; }
+    td.url { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+    .dot.good { background: var(--good); }
+    .dot.warn { background: var(--warn); }
+    .dot.bad { background: var(--bad); }
+    .dot.none { background: #94A3B8; }
+    .empty { padding: 60px 20px; text-align: center; color: var(--muted); font-size: 0.9rem; }
+    .limit-note { font-size: 0.75rem; color: var(--muted); margin-top: 6px; }
+    :focus-visible { outline: 2px solid rgba(225, 29, 72, 0.6); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Batch audit</h1>
+    <p class="meta">Paste URLs (comma- or newline-separated, up to 50). PulseVitals opens each in a background tab, captures Core Web Vitals + transfer size, and ranks them. Export the result to CSV when done.</p>
+
+    <div class="input-row">
+      <textarea id="urls" placeholder="https://example.com/home&#10;https://example.com/pricing&#10;https://example.com/checkout"></textarea>
+      <div class="controls">
+        <button class="btn btn-primary" id="run">Run audit</button>
+        <button class="btn btn-ghost" id="export" disabled>Export CSV</button>
+        <span class="progress" id="progress"></span>
+      </div>
+      <div class="limit-note">Tabs open in the background and close when measured. Limit: 50 URLs per run to bound memory.</div>
+    </div>
+
+    <div id="results-wrap" hidden>
+      <table>
+        <thead>
+          <tr>
+            <th data-sort="url">URL</th>
+            <th data-sort="verdict">CWV</th>
+            <th class="num" data-sort="lcp">LCP (ms)</th>
+            <th class="num" data-sort="cls">CLS</th>
+            <th class="num" data-sort="inp">INP (ms)</th>
+            <th class="num" data-sort="transfer">Transfer</th>
+            <th class="num" data-sort="ttfb">TTFB (ms)</th>
+          </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty">No results yet. Paste URLs above and click <strong>Run audit</strong>.</div>
+  </main>
+  <script src="batch.js"></script>
+</body>
+</html>

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PulseVitals — v1.6 CWV badge + insights (seeds #16, #17)</title>
+<style>
+  :root { --page-bg: #F5F5F7; --page-fg: #0F172A; --page-muted: #475569; --page-border: #E2E8F0; }
+  [data-theme="dark"] { --page-bg: #0A0A0C; --page-fg: #E6EDF3; --page-muted: #94A3B8; --page-border: #1F2933; }
+  html { background: var(--page-bg); }
+  body { margin: 0; padding: 32px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--page-bg); color: var(--page-fg); }
+  .page { max-width: 1320px; margin: 0 auto; }
+  h1.title { font-size: 1.5rem; margin: 0 0 4px; font-weight: 600; }
+  p.intro { color: var(--page-muted); margin: 0 0 24px; font-size: 0.875rem; max-width: 820px; }
+  .toolbar { margin-bottom: 24px; display: flex; gap: 8px; }
+  .toolbar button { padding: 6px 12px; border: 1px solid var(--page-border); background: transparent;
+    color: var(--page-fg); cursor: pointer; border-radius: 6px; font: inherit; font-size: 0.875rem; }
+  .toolbar button:hover { border-color: var(--page-muted); }
+
+  /* Badge states strip */
+  .badge-strip {
+    display: flex; gap: 24px; margin-bottom: 32px; padding: 20px 24px;
+    background: #FFFFFF; border: 1px solid var(--page-border); border-radius: 10px;
+  }
+  [data-theme="dark"] .badge-strip { background: #0B0F14; }
+  .badge-strip h2 { font-size: 0.875rem; margin: 0 0 12px; color: var(--page-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  .badge-row { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-end; }
+  .badge-demo { display: flex; flex-direction: column; gap: 6px; align-items: center; font-size: 0.75rem; color: var(--page-muted); }
+  .toolbar-icon {
+    position: relative; width: 32px; height: 32px;
+    background: #E11D48; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .toolbar-icon svg { width: 22px; height: 22px; }
+  .toolbar-icon .badge-dot {
+    position: absolute; bottom: -3px; right: -3px; width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid #F5F5F7; box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+  [data-theme="dark"] .toolbar-icon .badge-dot { border-color: #0A0A0C; }
+  .badge-dot.good { background: #16A34A; }
+  .badge-dot.warn { background: #D97706; }
+  .badge-dot.bad { background: #DC2626; }
+  .badge-dot.none { background: #94A3B8; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, 380px); gap: 32px; }
+  .card-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--page-muted); margin-bottom: 8px; }
+  .popup-frame { width: 380px; height: 520px; border: 1px solid var(--page-border); border-radius: 10px;
+    overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.12); background: #FFFFFF; position: relative; }
+  [data-theme="dark"] .popup-frame { background: #0B0F14; }
+
+  /* popup styles */
+  .popup { width: 100%; height: 100%; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #0F172A; background: #FFFFFF; display: flex; flex-direction: column; box-sizing: border-box; }
+  [data-theme="dark"] .popup { color: #E6EDF3; background: #0B0F14; }
+  .popup header { height: 48px; padding: 0 12px 0 16px; display: flex; align-items: center;
+    justify-content: space-between; border-bottom: 1px solid #E2E8F0; gap: 8px; }
+  [data-theme="dark"] .popup header { border-bottom-color: #1F2933; }
+  .popup h1 { margin: 0; font-size: 1.125rem; font-weight: 600; color: inherit; flex: 1; }
+  .popup .iconbtn { padding: 4px 8px; border: 1px solid #E2E8F0; background: transparent; border-radius: 4px;
+    font: inherit; font-size: 0.75rem; color: #475569; cursor: pointer; }
+  [data-theme="dark"] .popup .iconbtn { border-color: #1F2933; color: #94A3B8; }
+  .popup .subhead { padding: 12px 16px 4px; margin: 0; font-size: 0.875rem; color: #475569; }
+  [data-theme="dark"] .popup .subhead { color: #94A3B8; }
+
+  /* CWV status bar */
+  .cwv-bar {
+    margin: 4px 16px 12px; padding: 10px 12px;
+    border-radius: 6px; display: flex; align-items: center; gap: 10px;
+    font-size: 0.875rem;
+  }
+  .cwv-bar.good { background: rgba(22, 163, 74, 0.1); color: #166534; }
+  .cwv-bar.warn { background: rgba(217, 119, 6, 0.12); color: #9A3412; }
+  .cwv-bar.bad { background: rgba(220, 38, 38, 0.1); color: #991B1B; }
+  .cwv-bar.none { background: #F5F7FA; color: #475569; }
+  [data-theme="dark"] .cwv-bar.good { background: rgba(34, 197, 94, 0.15); color: #4ADE80; }
+  [data-theme="dark"] .cwv-bar.warn { background: rgba(245, 158, 11, 0.15); color: #FBBF24; }
+  [data-theme="dark"] .cwv-bar.bad { background: rgba(239, 68, 68, 0.15); color: #F87171; }
+  [data-theme="dark"] .cwv-bar.none { background: #131820; color: #94A3B8; }
+  .cwv-bar .pill {
+    width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
+  }
+  .cwv-bar.good .pill { background: #16A34A; }
+  .cwv-bar.warn .pill { background: #D97706; }
+  .cwv-bar.bad .pill { background: #DC2626; }
+  .cwv-bar.none .pill { background: #94A3B8; }
+  .cwv-bar .label { font-weight: 600; }
+  .cwv-bar .breakdown {
+    flex: 1; text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75rem; opacity: 0.9;
+  }
+
+  .popup .body { flex: 1; overflow-y: auto; padding: 0 16px 12px; }
+  h2.section-heading {
+    margin: 16px 0 6px; padding: 0 0 6px;
+    font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+    color: #475569; border-bottom: 1px solid #E2E8F0;
+  }
+  [data-theme="dark"] h2.section-heading { color: #94A3B8; border-bottom-color: #1F2933; }
+
+  /* Insights */
+  .insight {
+    padding: 10px 4px; border-bottom: 1px solid #E2E8F0;
+  }
+  [data-theme="dark"] .insight { border-bottom-color: #1F2933; }
+  .insight:last-of-type { border-bottom: none; }
+  .insight-head {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+  }
+  .insight-sev {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .insight-sev.bad { background: #DC2626; }
+  .insight-sev.warn { background: #D97706; }
+  .insight-title { font-weight: 600; font-size: 0.875rem; flex: 1; }
+  .insight-savings {
+    font-size: 0.75rem; color: #475569;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  [data-theme="dark"] .insight-savings { color: #94A3B8; }
+  .insight-fix { font-size: 0.75rem; color: #475569; line-height: 1.4; margin: 0; }
+  [data-theme="dark"] .insight-fix { color: #94A3B8; }
+
+  /* Compact table carried over from v1.5 */
+  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  th { text-align: left; padding: 8px 4px; font-weight: 600; color: #475569;
+    border-bottom: 1px solid #E2E8F0; }
+  [data-theme="dark"] th { color: #94A3B8; border-bottom-color: #1F2933; }
+  th.num, td.num { text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  td { padding: 6px 4px; border-bottom: 1px solid #E2E8F0; }
+  [data-theme="dark"] td { border-bottom-color: #1F2933; }
+  tr:last-child td { border-bottom: none; }
+
+  .popup footer { height: 24px; padding: 0 16px; display: flex; align-items: center; justify-content: flex-end;
+    border-top: 1px solid #E2E8F0; }
+  [data-theme="dark"] .popup footer { border-top-color: #1F2933; }
+  .popup .version { font-size: 0.75rem; color: #475569; }
+  [data-theme="dark"] .popup .version { color: #94A3B8; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <h1 class="title">PulseVitals — v1.6 CWV badge + plain-English insights</h1>
+    <p class="intro">
+      Seeds <code>#16</code> (CWV pass/fail badge on the toolbar icon) + <code>#17</code> (plain-English insights with fix
+      recipes). Toolbar icon gains a small colored dot in the corner reflecting the overall CWV verdict; popup gains a
+      CWV status bar at the top and an <strong>Insights</strong> section listing 3–5 prioritised issues with estimated
+      savings and one-paragraph fixes. Data pipeline adds CLS + INP measurement alongside the existing LCP.
+    </p>
+    <div class="toolbar"><button id="theme-toggle">Toggle dark / light</button></div>
+
+    <!-- Badge states -->
+    <div class="badge-strip">
+      <h2>Toolbar icon — CWV verdict (zoomed 2×)</h2>
+      <div class="badge-row">
+        <div class="badge-demo">
+          <div class="toolbar-icon">
+            <svg viewBox="0 0 128 128" fill="none"><path d="M16 64 L40 64 L48 56 L56 64 L68 24 L76 104 L84 64 L112 64" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="badge-dot good"></span>
+          </div>
+          <span>Good</span>
+        </div>
+        <div class="badge-demo">
+          <div class="toolbar-icon">
+            <svg viewBox="0 0 128 128" fill="none"><path d="M16 64 L40 64 L48 56 L56 64 L68 24 L76 104 L84 64 L112 64" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="badge-dot warn"></span>
+          </div>
+          <span>Needs improvement</span>
+        </div>
+        <div class="badge-demo">
+          <div class="toolbar-icon">
+            <svg viewBox="0 0 128 128" fill="none"><path d="M16 64 L40 64 L48 56 L56 64 L68 24 L76 104 L84 64 L112 64" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="badge-dot bad"></span>
+          </div>
+          <span>Poor</span>
+        </div>
+        <div class="badge-demo">
+          <div class="toolbar-icon">
+            <svg viewBox="0 0 128 128" fill="none"><path d="M16 64 L40 64 L48 56 L56 64 L68 24 L76 104 L84 64 L112 64" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="badge-dot none"></span>
+          </div>
+          <span>No data / unsupported</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+
+      <!-- CURRENT - Good CWV -->
+      <div>
+        <div class="card-label">Current — CWV Good</div>
+        <div class="popup-frame">
+          <div class="popup">
+            <header>
+              <h1>PulseVitals</h1>
+              <button class="iconbtn">History</button>
+              <button class="iconbtn">Export</button>
+            </header>
+            <p class="subhead">Performance for this page</p>
+            <div class="cwv-bar good">
+              <span class="pill"></span>
+              <span class="label">Core Web Vitals: Good</span>
+              <span class="breakdown">LCP 1.2s &middot; CLS 0.05 &middot; INP 140ms</span>
+            </div>
+            <div class="body">
+              <h2 class="section-heading">Insights</h2>
+              <div class="state" style="padding: 16px 4px; color: #475569; font-size: 0.875rem; text-align: left; line-height: 1.5;">
+                No actionable issues detected. Core Web Vitals are passing — keep it up.
+              </div>
+              <h2 class="section-heading">Timings</h2>
+              <table>
+                <thead><tr><th>Event</th><th class="num">&Delta; (ms)</th></tr></thead>
+                <tbody>
+                  <tr><td>responseStart</td><td class="num">176</td></tr>
+                  <tr><td>domInteractive</td><td class="num">580</td></tr>
+                  <tr><td>LCP</td><td class="num">1,200</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <footer><span class="version">v1.6</span></footer>
+          </div>
+        </div>
+      </div>
+
+      <!-- CURRENT - Poor CWV with insights -->
+      <div>
+        <div class="card-label">Current — CWV Poor with insights</div>
+        <div class="popup-frame">
+          <div class="popup">
+            <header>
+              <h1>PulseVitals</h1>
+              <button class="iconbtn">History</button>
+              <button class="iconbtn">Export</button>
+            </header>
+            <p class="subhead">Performance for this page</p>
+            <div class="cwv-bar bad">
+              <span class="pill"></span>
+              <span class="label">Core Web Vitals: Poor</span>
+              <span class="breakdown">LCP 4.8s &middot; CLS 0.32 &middot; INP 610ms</span>
+            </div>
+            <div class="body">
+              <h2 class="section-heading">Insights</h2>
+              <div class="insight">
+                <div class="insight-head">
+                  <span class="insight-sev bad"></span>
+                  <span class="insight-title">Largest image is 2.1 MB</span>
+                  <span class="insight-savings">~2.3 s</span>
+                </div>
+                <p class="insight-fix">Compress <code>/hero.jpg</code> to WebP or AVIF and serve a responsive <code>srcset</code>. Aim for &lt; 200 KB above the fold.</p>
+              </div>
+              <div class="insight">
+                <div class="insight-head">
+                  <span class="insight-sev bad"></span>
+                  <span class="insight-title">Layout shifts from a late-loading banner</span>
+                  <span class="insight-savings">CLS &minus;0.22</span>
+                </div>
+                <p class="insight-fix">Reserve vertical space for the cookie banner with <code>min-height</code>, or render it at the end of the body.</p>
+              </div>
+              <div class="insight">
+                <div class="insight-head">
+                  <span class="insight-sev warn"></span>
+                  <span class="insight-title">Main-thread blocking from 3rd-party tags</span>
+                  <span class="insight-savings">INP &minus;240ms</span>
+                </div>
+                <p class="insight-fix">Load Google Tag Manager and analytics with <code>async</code> / <code>defer</code>, or move to a consent gate after interaction.</p>
+              </div>
+              <div class="insight">
+                <div class="insight-head">
+                  <span class="insight-sev warn"></span>
+                  <span class="insight-title">Slow server response (TTFB 780 ms)</span>
+                  <span class="insight-savings">~0.4 s</span>
+                </div>
+                <p class="insight-fix">Cache the HTML at a CDN edge, or move expensive DB calls out of the request path. Target TTFB &lt; 300 ms.</p>
+              </div>
+              <div class="insight">
+                <div class="insight-head">
+                  <span class="insight-sev warn"></span>
+                  <span class="insight-title">Large JS bundle (1.1 MB)</span>
+                  <span class="insight-savings">~0.6 s</span>
+                </div>
+                <p class="insight-fix">Split <code>/bundle.js</code> with dynamic <code>import()</code>, tree-shake unused code, and ship modern ES for evergreen browsers.</p>
+              </div>
+            </div>
+            <footer><span class="version">v1.6</span></footer>
+          </div>
+        </div>
+      </div>
+
+      <!-- CURRENT - Needs improvement -->
+      <div>
+        <div class="card-label">Current — CWV Needs improvement</div>
+        <div class="popup-frame">
+          <div class="popup">
+            <header>
+              <h1>PulseVitals</h1>
+              <button class="iconbtn">History</button>
+              <button class="iconbtn">Export</button>
+            </header>
+            <p class="subhead">Performance for this page</p>
+            <div class="cwv-bar warn">
+              <span class="pill"></span>
+              <span class="label">Core Web Vitals: Needs improvement</span>
+              <span class="breakdown">LCP 3.1s &middot; CLS 0.08 &middot; INP 380ms</span>
+            </div>
+            <div class="body">
+              <h2 class="section-heading">Insights</h2>
+              <div class="insight">
+                <div class="insight-head">
+                  <span class="insight-sev warn"></span>
+                  <span class="insight-title">LCP element is a background image</span>
+                  <span class="insight-savings">~0.8 s</span>
+                </div>
+                <p class="insight-fix">Move hero art from a CSS <code>background-image</code> to an <code>&lt;img&gt;</code> tag so the browser can preload it earlier.</p>
+              </div>
+              <div class="insight">
+                <div class="insight-head">
+                  <span class="insight-sev warn"></span>
+                  <span class="insight-title">Long-running input handler</span>
+                  <span class="insight-savings">INP &minus;180ms</span>
+                </div>
+                <p class="insight-fix">Break up the click-handler work with <code>requestIdleCallback</code> or a <code>setTimeout(…, 0)</code> so the browser can paint between chunks.</p>
+              </div>
+            </div>
+            <footer><span class="version">v1.6</span></footer>
+          </div>
+        </div>
+      </div>
+
+      <!-- CURRENT - No data yet -->
+      <div>
+        <div class="card-label">Current — CWV data not yet available</div>
+        <div class="popup-frame">
+          <div class="popup">
+            <header>
+              <h1>PulseVitals</h1>
+              <button class="iconbtn">History</button>
+              <button class="iconbtn">Export</button>
+            </header>
+            <p class="subhead">Performance for this page</p>
+            <div class="cwv-bar none">
+              <span class="pill"></span>
+              <span class="label">Core Web Vitals: Measuring&hellip;</span>
+              <span class="breakdown">CLS and INP need interaction</span>
+            </div>
+            <div class="body">
+              <h2 class="section-heading">Insights</h2>
+              <div class="state" style="padding: 16px 4px; color: #475569; font-size: 0.875rem; text-align: left; line-height: 1.5;">
+                Interact with the page (scroll, click) to populate CLS and INP. LCP usually arrives in the first second.
+              </div>
+            </div>
+            <footer><span class="version">v1.6</span></footer>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const root = document.documentElement;
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) root.dataset.theme = "dark";
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+      root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+    });
+  </script>
+</body>
+</html>

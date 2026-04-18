@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PulseVitals — v2.1 Feature pass</title>
+<style>
+  :root { --page-bg:#F5F5F7; --page-fg:#0F172A; --page-muted:#475569; --page-border:#E2E8F0; }
+  [data-theme="dark"] { --page-bg:#0A0A0C; --page-fg:#E6EDF3; --page-muted:#94A3B8; --page-border:#1F2933; }
+  html { background: var(--page-bg); }
+  body { margin:0; padding:32px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--page-bg); color: var(--page-fg); }
+  .page { max-width: 1400px; margin: 0 auto; }
+  h1.title { font-size: 1.5rem; margin: 0 0 4px; font-weight: 600; }
+  p.intro { color: var(--page-muted); margin: 0 0 24px; font-size: 0.875rem; max-width: 920px; line-height: 1.5; }
+  h2.section { font-size: 1.125rem; margin: 40px 0 8px; font-weight: 600; }
+  p.section-desc { color: var(--page-muted); font-size: 0.875rem; margin: 0 0 16px; max-width: 760px; }
+  .toolbar { margin-bottom: 24px; display: flex; gap: 8px; }
+  .toolbar button { padding: 6px 12px; border: 1px solid var(--page-border); background: transparent;
+    color: var(--page-fg); cursor: pointer; border-radius: 6px; font: inherit; font-size: 0.875rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, 380px); gap: 28px; }
+  .wide-grid { display: grid; grid-template-columns: repeat(auto-fill, 792px); gap: 28px; }
+  .card-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--page-muted); margin-bottom: 8px; }
+  .frame { border: 1px solid var(--page-border); border-radius: 10px; overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08); background: #FFFFFF; position: relative; }
+  [data-theme="dark"] .frame { background: #0B0F14; }
+  .popup-frame { width: 380px; height: 520px; }
+  .wide-frame { width: 792px; height: 520px; }
+
+  /* Shared popup chrome */
+  .popup { width: 100%; height: 100%; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #0F172A; background: #FFFFFF; display: flex; flex-direction: column; box-sizing: border-box; }
+  [data-theme="dark"] .popup { color: #E6EDF3; background: #0B0F14; }
+  .popup header { height: 48px; padding: 0 8px 0 16px; display: flex; align-items: center;
+    justify-content: space-between; border-bottom: 1px solid #E2E8F0; gap: 6px; }
+  [data-theme="dark"] .popup header { border-bottom-color: #1F2933; }
+  .popup h1 { margin: 0; font-size: 1.125rem; font-weight: 600; color: inherit; flex: 1; }
+  .popup .iconbtn { padding: 4px 8px; border: 1px solid #E2E8F0; background: transparent; border-radius: 4px;
+    font: inherit; font-size: 0.75rem; color: #475569; cursor: pointer; white-space: nowrap; }
+  [data-theme="dark"] .popup .iconbtn { border-color: #1F2933; color: #94A3B8; }
+  .popup .subhead { padding: 12px 16px 4px; margin: 0; font-size: 0.875rem; color: #475569; display: flex;
+    justify-content: space-between; align-items: baseline; }
+  [data-theme="dark"] .popup .subhead { color: #94A3B8; }
+  .popup .urlbar { margin: 4px 16px 12px; padding: 6px 8px; background: #F5F7FA; border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem; color: #475569;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  [data-theme="dark"] .popup .urlbar { background: #131820; color: #94A3B8; }
+  .popup .body { flex: 1; overflow-y: auto; padding: 0 16px 12px; }
+  h2.section-heading { margin: 16px 0 6px; padding: 0 0 6px; font-size: 0.7rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em; color: #475569; border-bottom: 1px solid #E2E8F0; }
+  [data-theme="dark"] h2.section-heading { color: #94A3B8; border-bottom-color: #1F2933; }
+  .popup footer { height: 24px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid #E2E8F0; font-size: 0.7rem; color: #475569; }
+  [data-theme="dark"] .popup footer { border-top-color: #1F2933; color: #94A3B8; }
+
+  /* Waterfall */
+  .wf-row { display: grid; grid-template-columns: 120px 1fr 56px; gap: 6px; align-items: center;
+    padding: 4px 2px; font-size: 0.7rem; }
+  .wf-name {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .wf-track { position: relative; height: 12px; background: #F5F7FA; border-radius: 2px; }
+  [data-theme="dark"] .wf-track { background: #131820; }
+  .wf-bar { position: absolute; top: 1px; height: 10px; border-radius: 2px; background: #CBD5E1; }
+  .wf-bar.script { background: #F59E0B; }
+  .wf-bar.css { background: #3B82F6; }
+  .wf-bar.img { background: #10B981; }
+  .wf-bar.xhr, .wf-bar.fetch { background: #8B5CF6; }
+  .wf-size { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #475569;
+    text-align: right; font-size: 0.65rem; }
+  [data-theme="dark"] .wf-size { color: #94A3B8; }
+  .wf-legend { display: flex; gap: 10px; font-size: 0.65rem; color: #475569; margin: 6px 0 0; flex-wrap: wrap; }
+  [data-theme="dark"] .wf-legend { color: #94A3B8; }
+  .wf-legend .sw { display: inline-block; width: 10px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+
+  /* History with compare checkboxes */
+  .history-item { display: block; width: 100%; text-align: left; padding: 10px 4px 10px 32px;
+    border: none; background: transparent; border-bottom: 1px solid #E2E8F0;
+    cursor: pointer; font: inherit; color: inherit; position: relative; }
+  [data-theme="dark"] .history-item { border-bottom-color: #1F2933; }
+  .history-item:hover { background: #F5F7FA; }
+  [data-theme="dark"] .history-item:hover { background: #131820; }
+  .history-item .chk { position: absolute; left: 8px; top: 12px; width: 16px; height: 16px;
+    border: 1px solid #CBD5E1; border-radius: 3px; }
+  .history-item.sel .chk { background: #E11D48; border-color: #E11D48; color: #FFFFFF;
+    display: flex; align-items: center; justify-content: center; font-size: 0.7rem; }
+  .history-item .when { font-size: 0.7rem; color: #475569; }
+  .history-item .path { font-size: 0.85rem; margin: 2px 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .history-item .stats { font-size: 0.7rem; color: #475569;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .history-item .note { font-size: 0.7rem; color: #E11D48; margin-top: 3px; font-style: italic; }
+  [data-theme="dark"] .history-item .when, [data-theme="dark"] .history-item .stats { color: #94A3B8; }
+  .history-actionbar { position: sticky; top: 0; background: #FFFFFF; padding: 8px 4px; display: flex; gap: 8px;
+    justify-content: space-between; align-items: center; border-bottom: 1px solid #E2E8F0; font-size: 0.8rem; }
+  [data-theme="dark"] .history-actionbar { background: #0B0F14; border-bottom-color: #1F2933; }
+  .history-actionbar button { padding: 4px 10px; background: #E11D48; color: #FFFFFF; border: none;
+    border-radius: 4px; font: inherit; font-size: 0.75rem; cursor: pointer; }
+  .history-actionbar button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Diff view */
+  .diff-header { display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    padding: 10px 0 12px; font-size: 0.7rem; color: #475569; }
+  [data-theme="dark"] .diff-header { color: #94A3B8; }
+  .diff-header .col-a, .diff-header .col-b { padding: 6px 8px; background: #F5F7FA; border-radius: 4px; }
+  [data-theme="dark"] .diff-header .col-a, [data-theme="dark"] .diff-header .col-b { background: #131820; }
+  .diff-row { display: grid; grid-template-columns: 1fr auto 1fr auto;
+    gap: 8px; padding: 6px 4px; font-size: 0.85rem; border-bottom: 1px solid #E2E8F0;
+    align-items: center; }
+  [data-theme="dark"] .diff-row { border-bottom-color: #1F2933; }
+  .diff-row .label { font-weight: 600; grid-column: 1 / -1; padding-top: 4px; }
+  .diff-row .a, .diff-row .b { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.8rem; }
+  .diff-row .arrow { color: #94A3B8; }
+  .diff-row .delta { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75rem; padding: 1px 6px; border-radius: 3px; }
+  .delta.better { background: rgba(22,163,74,0.15); color: #166534; }
+  .delta.worse { background: rgba(220,38,38,0.15); color: #991B1B; }
+  .delta.same { color: #94A3B8; }
+  [data-theme="dark"] .delta.better { background: rgba(34,197,94,0.25); color: #4ADE80; }
+  [data-theme="dark"] .delta.worse { background: rgba(239,68,68,0.25); color: #F87171; }
+
+  /* Console errors */
+  .err-row { display: flex; align-items: flex-start; gap: 8px; padding: 6px 4px; font-size: 0.8rem;
+    border-bottom: 1px solid #E2E8F0; }
+  [data-theme="dark"] .err-row { border-bottom-color: #1F2933; }
+  .err-row .dot { width: 8px; height: 8px; border-radius: 50%; background: #DC2626;
+    margin-top: 6px; flex-shrink: 0; }
+  .err-msg { flex: 1; }
+  .err-msg .msg { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .err-msg .src { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.65rem;
+    color: #475569; margin-top: 2px; }
+  [data-theme="dark"] .err-msg .src { color: #94A3B8; }
+  .err-count {
+    background: #DC2626; color: #FFFFFF; border-radius: 10px; padding: 1px 8px;
+    font-size: 0.7rem; font-weight: 600; margin-left: 6px;
+  }
+
+  /* Image optimization insights */
+  .insight-card { padding: 10px 4px; border-bottom: 1px solid #E2E8F0;
+    display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: baseline; }
+  [data-theme="dark"] .insight-card { border-bottom-color: #1F2933; }
+  .insight-card .dot { width: 8px; height: 8px; border-radius: 50%; background: #D97706; margin-top: 4px; }
+  .insight-card .title { font-weight: 600; font-size: 0.875rem; }
+  .insight-card .title .badge { display: inline-block; font-size: 0.6rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    color: #10B981; border: 1px solid rgba(16,185,129,0.4); padding: 1px 5px; border-radius: 3px;
+    margin-right: 6px; }
+  .insight-card .saving { font-size: 0.7rem; color: #475569; font-family: ui-monospace, monospace; }
+  [data-theme="dark"] .insight-card .saving { color: #94A3B8; }
+  .insight-card .fix { grid-column: 2 / 4; font-size: 0.7rem; color: #475569; margin-top: 4px; line-height: 1.4; }
+  [data-theme="dark"] .insight-card .fix { color: #94A3B8; }
+
+  /* Annotation field */
+  .anno-row { padding: 6px 0 10px; }
+  .anno-label { font-size: 0.65rem; color: #475569; text-transform: uppercase; letter-spacing: 0.06em;
+    font-weight: 600; margin-bottom: 4px; }
+  [data-theme="dark"] .anno-label { color: #94A3B8; }
+  .anno-input {
+    width: 100%; box-sizing: border-box; font: inherit; font-size: 0.8rem;
+    padding: 6px 8px; border: 1px solid #E2E8F0; border-radius: 4px;
+    background: #F5F7FA; color: inherit; resize: vertical; min-height: 36px;
+    font-family: inherit;
+  }
+  [data-theme="dark"] .anno-input { border-color: #1F2933; background: #131820; }
+  .anno-saved { font-size: 0.65rem; color: #16A34A; margin-top: 4px; display: none; }
+  .anno-saved.show { display: inline; }
+
+  /* Pin overlay simulation */
+  .browser-sim { width: 792px; height: 520px; background: #FFFFFF;
+    border-radius: 8px; overflow: hidden; position: relative;
+    border: 1px solid var(--page-border); }
+  [data-theme="dark"] .browser-sim { background: #0B0F14; }
+  .sim-chrome { display: flex; height: 32px; background: #ECECEC; align-items: center; padding: 0 12px; gap: 8px; }
+  [data-theme="dark"] .sim-chrome { background: #131820; }
+  .sim-chrome .sdot { width: 10px; height: 10px; border-radius: 50%; background: #CBD5E1; }
+  .sim-chrome .saddr { flex: 1; background: #FFFFFF; border: 1px solid var(--page-border); padding: 3px 10px;
+    border-radius: 4px; font: ui-monospace, monospace; font-size: 0.7rem;
+    font-family: ui-monospace, monospace; color: #475569; }
+  [data-theme="dark"] .sim-chrome .saddr { background: #0B0F14; color: #94A3B8; }
+  .sim-page { padding: 40px; height: calc(100% - 32px); overflow: hidden; position: relative; }
+  .sim-page h2 { font-size: 1.8rem; margin: 0 0 12px; color: #0F172A; }
+  [data-theme="dark"] .sim-page h2 { color: #E6EDF3; }
+  .sim-page p { color: #475569; font-size: 0.9rem; line-height: 1.6; margin: 0 0 12px; max-width: 500px; }
+  [data-theme="dark"] .sim-page p { color: #94A3B8; }
+  .pin {
+    position: absolute; bottom: 16px; right: 16px;
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 12px;
+    background: #0F172A; color: #FFFFFF; border-radius: 10px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.25); font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.8rem;
+  }
+  [data-theme="dark"] .pin { background: #E6EDF3; color: #0B0F14; }
+  .pin .pin-verdict { width: 12px; height: 12px; border-radius: 50%; background: #DC2626; flex-shrink: 0; }
+  .pin .pin-verdict.good { background: #16A34A; }
+  .pin .pin-verdict.warn { background: #D97706; }
+  .pin .pin-lcp {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 600; font-size: 0.75rem;
+  }
+  .pin .pin-label { font-size: 0.7rem; opacity: 0.7; }
+  .pin .pin-close { background: none; border: none; color: inherit; cursor: pointer; font-size: 0.9rem;
+    opacity: 0.7; padding: 0 2px; }
+  .pin .pin-close:hover { opacity: 1; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <h1 class="title">PulseVitals — v2.1 Feature pass</h1>
+    <p class="intro">
+      Six new surfaces: <strong>waterfall</strong> timeline in popup · <strong>history compare + diff</strong> ·
+      <strong>console errors</strong> section · <strong>image-optimization insights</strong> (new rules in existing
+      Insights engine) · <strong>annotation field</strong> on history snapshots · <strong>pin overlay</strong>
+      floating on the page for always-visible CWV status. No new permissions. Version bump 2.0 → 2.1.
+    </p>
+    <div class="toolbar"><button id="theme-toggle">Toggle dark / light</button></div>
+
+    <!-- 1. Waterfall -->
+    <h2 class="section">§ 1. Waterfall / resource timeline</h2>
+    <p class="section-desc">Horizontal bars per resource, scaled against the full page load. Colored by initiator type. Helps answer "what's blocking LCP" visually.</p>
+    <div class="grid">
+      <div>
+        <div class="card-label">Popup — Waterfall section</div>
+        <div class="frame popup-frame"><div class="popup">
+          <header><h1>PulseVitals</h1>
+            <button class="iconbtn">📱</button><button class="iconbtn">History</button>
+            <button class="iconbtn">Export</button><button class="iconbtn">Share</button></header>
+          <p class="subhead">Performance for this page</p>
+          <div class="urlbar">example.com/products</div>
+          <div class="body">
+            <h2 class="section-heading">Waterfall · 8 of 42 resources</h2>
+            <div class="wf-row"><span class="wf-name">hero.jpg</span>
+              <div class="wf-track"><div class="wf-bar img" style="left:8%;width:32%"></div></div>
+              <span class="wf-size">2.1 MB</span></div>
+            <div class="wf-row"><span class="wf-name">bundle.js</span>
+              <div class="wf-track"><div class="wf-bar script" style="left:12%;width:44%"></div></div>
+              <span class="wf-size">1.1 MB</span></div>
+            <div class="wf-row"><span class="wf-name">app.css</span>
+              <div class="wf-track"><div class="wf-bar css" style="left:10%;width:8%"></div></div>
+              <span class="wf-size">86 KB</span></div>
+            <div class="wf-row"><span class="wf-name">gtm.js</span>
+              <div class="wf-track"><div class="wf-bar script" style="left:18%;width:18%"></div></div>
+              <span class="wf-size">74 KB</span></div>
+            <div class="wf-row"><span class="wf-name">fb_pixel.js</span>
+              <div class="wf-track"><div class="wf-bar script" style="left:28%;width:10%"></div></div>
+              <span class="wf-size">62 KB</span></div>
+            <div class="wf-row"><span class="wf-name">recs.json</span>
+              <div class="wf-track"><div class="wf-bar xhr" style="left:38%;width:14%"></div></div>
+              <span class="wf-size">12 KB</span></div>
+            <div class="wf-row"><span class="wf-name">logo.svg</span>
+              <div class="wf-track"><div class="wf-bar img" style="left:10%;width:4%"></div></div>
+              <span class="wf-size">4 KB</span></div>
+            <div class="wf-row"><span class="wf-name">favicon.ico</span>
+              <div class="wf-track"><div class="wf-bar img" style="left:10%;width:3%"></div></div>
+              <span class="wf-size">2 KB</span></div>
+            <div class="wf-legend">
+              <span><span class="sw" style="background:#F59E0B"></span>script</span>
+              <span><span class="sw" style="background:#3B82F6"></span>css</span>
+              <span><span class="sw" style="background:#10B981"></span>image</span>
+              <span><span class="sw" style="background:#8B5CF6"></span>xhr / fetch</span>
+              <span><span class="sw" style="background:#CBD5E1"></span>other</span>
+            </div>
+          </div>
+          <footer><a href="#">Report an issue</a><span>v2.1</span></footer>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- 2. History compare + 3. Diff -->
+    <h2 class="section">§ 2 / § 3. History compare + diff view</h2>
+    <p class="section-desc">Checkbox on each history row; select two, click Compare, see deltas side-by-side with better / worse badges.</p>
+    <div class="grid">
+      <div>
+        <div class="card-label">History list with 2 selected</div>
+        <div class="frame popup-frame"><div class="popup">
+          <header><h1>PulseVitals</h1>
+            <button class="iconbtn">📱</button><button class="iconbtn">History</button>
+            <button class="iconbtn">Export</button><button class="iconbtn">Share</button></header>
+          <p class="subhead"><span>Recent runs for example.com</span>
+            <button style="background:none;border:none;color:#E11D48;font:inherit;font-size:0.7rem;text-decoration:underline;cursor:pointer;">Back</button></p>
+          <div class="body" style="padding-top:0;">
+            <div class="history-actionbar">
+              <span style="color:#475569">2 of 5 selected</span>
+              <span><button>Compare</button></span>
+            </div>
+            <button class="history-item sel"><span class="chk">✓</span>
+              <div class="when">2 min ago</div>
+              <div class="path">/products — <em>after CDN</em></div>
+              <div class="stats">LCP 1,480ms · DOM 783ms · 412 KB top</div>
+              <div class="note">after CDN</div>
+            </button>
+            <button class="history-item"><span class="chk"></span>
+              <div class="when">Today, 09:12</div>
+              <div class="path">/products</div>
+              <div class="stats">LCP 2,810ms · DOM 910ms · 698 KB top</div>
+            </button>
+            <button class="history-item sel"><span class="chk">✓</span>
+              <div class="when">Yesterday, 18:44</div>
+              <div class="path">/products</div>
+              <div class="stats">LCP 4,800ms · DOM 1,402ms · 2.1 MB top</div>
+              <div class="note">before CDN — baseline</div>
+            </button>
+            <button class="history-item"><span class="chk"></span>
+              <div class="when">Yesterday, 16:02</div>
+              <div class="path">/products</div>
+              <div class="stats">LCP 4,620ms · DOM 1,380ms · 2.0 MB top</div>
+            </button>
+          </div>
+          <footer><a href="#">Report an issue</a><span>v2.1</span></footer>
+        </div></div>
+      </div>
+
+      <div>
+        <div class="card-label">Diff view — before → after</div>
+        <div class="frame popup-frame"><div class="popup">
+          <header><h1>PulseVitals</h1>
+            <button class="iconbtn">📱</button><button class="iconbtn">History</button>
+            <button class="iconbtn">Export</button><button class="iconbtn">Share</button></header>
+          <p class="subhead"><span>Diff · 2 snapshots</span>
+            <button style="background:none;border:none;color:#E11D48;font:inherit;font-size:0.7rem;text-decoration:underline;cursor:pointer;">Back to list</button></p>
+          <div class="body">
+            <div class="diff-header">
+              <div class="col-a"><strong>A — Yesterday, 18:44</strong><br><em>before CDN — baseline</em></div>
+              <div class="col-b"><strong>B — 2 min ago</strong><br><em>after CDN</em></div>
+            </div>
+            <h2 class="section-heading">Core Web Vitals</h2>
+            <div class="diff-row"><span class="a">LCP 4,800ms</span><span class="arrow">→</span>
+              <span class="b">LCP 1,480ms</span><span class="delta better">−3,320ms</span></div>
+            <div class="diff-row"><span class="a">CLS 0.32</span><span class="arrow">→</span>
+              <span class="b">CLS 0.04</span><span class="delta better">−0.28</span></div>
+            <div class="diff-row"><span class="a">INP 610ms</span><span class="arrow">→</span>
+              <span class="b">INP 180ms</span><span class="delta better">−430ms</span></div>
+            <h2 class="section-heading">Transfer</h2>
+            <div class="diff-row"><span class="a">2.1 MB top</span><span class="arrow">→</span>
+              <span class="b">412 KB top</span><span class="delta better">−1.7 MB</span></div>
+            <div class="diff-row"><span class="a">42 resources</span><span class="arrow">→</span>
+              <span class="b">38 resources</span><span class="delta better">−4</span></div>
+            <h2 class="section-heading">Changed resources</h2>
+            <div class="diff-row"><span class="a" style="color:#DC2626;">hero.jpg 2.1 MB</span>
+              <span class="arrow">→</span>
+              <span class="b" style="color:#16A34A;">hero.webp 320 KB</span>
+              <span class="delta better">−1.78 MB</span></div>
+          </div>
+          <footer><a href="#">Report an issue</a><span>v2.1</span></footer>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- 4. Console errors -->
+    <h2 class="section">§ 4. Console errors section</h2>
+    <p class="section-desc">Counts <code>window.error</code> and <code>unhandledrejection</code> events in the content script. Surfaces up to 5 most-recent messages with source:line.</p>
+    <div class="grid">
+      <div>
+        <div class="card-label">Popup — Console errors</div>
+        <div class="frame popup-frame"><div class="popup">
+          <header><h1>PulseVitals</h1>
+            <button class="iconbtn">📱</button><button class="iconbtn">History</button>
+            <button class="iconbtn">Export</button><button class="iconbtn">Share</button></header>
+          <p class="subhead">Performance for this page</p>
+          <div class="urlbar">example.com/products</div>
+          <div class="body">
+            <h2 class="section-heading">
+              Console errors <span class="err-count">3</span>
+            </h2>
+            <div class="err-row"><span class="dot"></span>
+              <div class="err-msg">
+                <div class="msg">TypeError: Cannot read properties of undefined (reading 'render')</div>
+                <div class="src">app.bundle.js:1:48319</div>
+              </div></div>
+            <div class="err-row"><span class="dot"></span>
+              <div class="err-msg">
+                <div class="msg">Uncaught (in promise) NetworkError: Failed to fetch</div>
+                <div class="src">tracker.js:12:78</div>
+              </div></div>
+            <div class="err-row"><span class="dot"></span>
+              <div class="err-msg">
+                <div class="msg">ReferenceError: gtag is not defined</div>
+                <div class="src">inline-script:8</div>
+              </div></div>
+            <h2 class="section-heading">Insights</h2>
+            <div style="font-size:0.75rem;color:#475569;padding:6px 4px;">5 items · scrolls below</div>
+          </div>
+          <footer><a href="#">Report an issue</a><span>v2.1</span></footer>
+        </div></div>
+      </div>
+      <div>
+        <div class="card-label">Zero errors state (collapsed)</div>
+        <div class="frame popup-frame"><div class="popup">
+          <header><h1>PulseVitals</h1>
+            <button class="iconbtn">📱</button><button class="iconbtn">History</button>
+            <button class="iconbtn">Export</button><button class="iconbtn">Share</button></header>
+          <p class="subhead">Performance for this page</p>
+          <div class="urlbar">example.com/clean</div>
+          <div class="body">
+            <h2 class="section-heading">Console errors
+              <span style="font-size:0.7rem;color:#16A34A;margin-left:6px;font-weight:600">None</span>
+            </h2>
+            <div style="font-size:0.75rem;color:#475569;padding:6px 4px;">No JS errors captured during this page view.</div>
+            <h2 class="section-heading">Insights</h2>
+          </div>
+          <footer><a href="#">Report an issue</a><span>v2.1</span></footer>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- 5. Image optimization insights -->
+    <h2 class="section">§ 5. Image-optimization insights (new rules in existing engine)</h2>
+    <p class="section-desc">Three new rules feeding the Insights section. Badged as "Image" so they visually cluster. Data comes from a new content-script image DOM walk.</p>
+    <div class="grid">
+      <div>
+        <div class="card-label">Popup — Image insights (in situ)</div>
+        <div class="frame popup-frame"><div class="popup">
+          <header><h1>PulseVitals</h1>
+            <button class="iconbtn">📱</button><button class="iconbtn">History</button>
+            <button class="iconbtn">Export</button><button class="iconbtn">Share</button></header>
+          <p class="subhead">Performance for this page</p>
+          <div class="urlbar">example.com/products</div>
+          <div class="body">
+            <h2 class="section-heading">Insights</h2>
+            <div class="insight-card">
+              <span class="dot"></span>
+              <span class="title"><span class="badge">Image</span>3 images could be WebP / AVIF</span>
+              <span class="saving">~1.8 s</span>
+              <p class="fix">hero.jpg, banner.jpg, and about.png combine for 3.2 MB. Modern formats typically cut 30–60% off transfer size.</p>
+            </div>
+            <div class="insight-card">
+              <span class="dot"></span>
+              <span class="title"><span class="badge">Image</span>5 images below the fold missing <code>loading="lazy"</code></span>
+              <span class="saving">~0.4 s</span>
+              <p class="fix">Add <code>loading="lazy"</code> to off-screen images so the browser defers them until needed.</p>
+            </div>
+            <div class="insight-card">
+              <span class="dot"></span>
+              <span class="title"><span class="badge">Image</span>Hero image has no responsive srcset</span>
+              <span class="saving">~0.9 s</span>
+              <p class="fix">Serve smaller variants via <code>srcset</code> + <code>sizes</code> so mobile users don't download the desktop hero.</p>
+            </div>
+            <div class="insight-card" style="grid-template-columns: auto 1fr auto;">
+              <span class="dot"></span>
+              <span class="title">Slow Largest Contentful Paint (4.8s)</span>
+              <span class="saving">~2.3 s</span>
+              <p class="fix">Existing non-image insight below image ones.</p>
+            </div>
+          </div>
+          <footer><a href="#">Report an issue</a><span>v2.1</span></footer>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- 6. Annotation -->
+    <h2 class="section">§ 6. Annotation on history snapshots</h2>
+    <p class="section-desc">Editable note on each saved run. Shows up in the history list as an italic red subline. Useful for marking "before CDN", "holiday traffic", etc.</p>
+    <div class="grid">
+      <div>
+        <div class="card-label">History detail with editable note</div>
+        <div class="frame popup-frame"><div class="popup">
+          <header><h1>PulseVitals</h1>
+            <button class="iconbtn">📱</button><button class="iconbtn">History</button>
+            <button class="iconbtn">Export</button><button class="iconbtn">Share</button></header>
+          <p class="subhead"><span>Snapshot · Yesterday, 18:44</span>
+            <button style="background:none;border:none;color:#E11D48;font:inherit;font-size:0.7rem;text-decoration:underline;cursor:pointer;">Back to list</button></p>
+          <div class="urlbar">example.com/products</div>
+          <div class="body">
+            <div class="anno-row">
+              <div class="anno-label">Note</div>
+              <textarea class="anno-input">before CDN — baseline</textarea>
+              <span class="anno-saved show">Saved ✓</span>
+            </div>
+            <h2 class="section-heading">Insights</h2>
+            <div style="font-size:0.75rem;color:#475569;padding:6px 4px;">5 items · scrolls below</div>
+            <h2 class="section-heading">Timings</h2>
+            <div style="font-size:0.75rem;color:#475569;padding:6px 4px;">14 rows...</div>
+          </div>
+          <footer><a href="#">Report an issue</a><span>v2.1</span></footer>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- 7. Pin overlay -->
+    <h2 class="section">§ 7. Pin overlay (on-page floating badge)</h2>
+    <p class="section-desc">Optional (Options toggle). Content script injects a small persistent indicator in the bottom-right. Shows verdict color + LCP. Dismissible per tab; re-appears on new page loads. Zero-DOM-pollution: attached to shadow DOM to avoid styling bleeding the host page.</p>
+    <div class="wide-grid">
+      <div>
+        <div class="card-label">Bad CWV — pin badge visible on a real-looking page</div>
+        <div class="browser-sim">
+          <div class="sim-chrome">
+            <span class="sdot"></span><span class="sdot"></span><span class="sdot"></span>
+            <div class="saddr">https://example.com/products</div>
+          </div>
+          <div class="sim-page">
+            <h2>Stage-test malls configurations</h2>
+            <p>This is a simulated host page. The floating badge in the bottom-right corner is the PulseVitals pin overlay. Hosted in a Shadow DOM so none of the page's CSS can style it. Draggable optional for v2.2.</p>
+            <p>Click × to dismiss for this tab; it returns on the next page load.</p>
+            <div class="pin">
+              <span class="pin-verdict"></span>
+              <div><div class="pin-label">PulseVitals</div>
+                <div class="pin-lcp">LCP 4.8s · CLS 0.32</div></div>
+              <button class="pin-close" title="Hide until next page load">×</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card-label">Good CWV — pin is reassuring</div>
+        <div class="browser-sim">
+          <div class="sim-chrome">
+            <span class="sdot"></span><span class="sdot"></span><span class="sdot"></span>
+            <div class="saddr">https://example.com/pricing</div>
+          </div>
+          <div class="sim-page">
+            <h2>Fast-loading pricing page</h2>
+            <p>Everything renders quickly. The pin is green, LCP is under a second — no action needed.</p>
+            <div class="pin">
+              <span class="pin-verdict good"></span>
+              <div><div class="pin-label">PulseVitals</div>
+                <div class="pin-lcp">LCP 0.9s</div></div>
+              <button class="pin-close">×</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin-top:48px; padding: 20px 24px; background: rgba(225,29,72,0.08); border: 1px solid rgba(225,29,72,0.25); border-radius: 8px; font-size: 0.9rem; line-height: 1.5; max-width: 900px;">
+      <strong>Approval scope.</strong> Approving this mock authorises v2.1 Dev: waterfall section in popup, history compare + diff view, console errors section, 3 new image-optimization insight rules, annotation field on history snapshots, pin overlay (default off; opt-in via Options). Version bump 2.0 → 2.1. No new Chrome permissions.
+    </p>
+  </div>
+  <script>
+    const root = document.documentElement;
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) root.dataset.theme = "dark";
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+      root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+    });
+  </script>
+</body>
+</html>

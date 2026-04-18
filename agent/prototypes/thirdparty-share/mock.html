@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PulseVitals — v1.8 Third-party breakdown + Share (seeds #19, #21)</title>
+<style>
+  :root { --page-bg: #F5F5F7; --page-fg: #0F172A; --page-muted: #475569; --page-border: #E2E8F0; }
+  [data-theme="dark"] { --page-bg: #0A0A0C; --page-fg: #E6EDF3; --page-muted: #94A3B8; --page-border: #1F2933; }
+  html { background: var(--page-bg); }
+  body { margin: 0; padding: 32px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--page-bg); color: var(--page-fg); }
+  .page { max-width: 1400px; margin: 0 auto; }
+  h1.title { font-size: 1.5rem; margin: 0 0 4px; font-weight: 600; }
+  p.intro { color: var(--page-muted); margin: 0 0 24px; font-size: 0.875rem; max-width: 840px; }
+  .toolbar { margin-bottom: 24px; display: flex; gap: 8px; }
+  .toolbar button { padding: 6px 12px; border: 1px solid var(--page-border); background: transparent;
+    color: var(--page-fg); cursor: pointer; border-radius: 6px; font: inherit; font-size: 0.875rem; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, 380px); gap: 32px; }
+  .card-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--page-muted); margin-bottom: 8px; }
+  .popup-frame { width: 380px; height: 520px; border: 1px solid var(--page-border); border-radius: 10px;
+    overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.12); background: #FFFFFF; position: relative; }
+  [data-theme="dark"] .popup-frame { background: #0B0F14; }
+
+  /* popup styles */
+  .popup { width: 100%; height: 100%; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #0F172A; background: #FFFFFF; display: flex; flex-direction: column; box-sizing: border-box; }
+  [data-theme="dark"] .popup { color: #E6EDF3; background: #0B0F14; }
+  .popup header { height: 48px; padding: 0 8px 0 16px; display: flex; align-items: center;
+    justify-content: space-between; border-bottom: 1px solid #E2E8F0; gap: 6px; }
+  [data-theme="dark"] .popup header { border-bottom-color: #1F2933; }
+  .popup h1 { margin: 0; font-size: 1.125rem; font-weight: 600; color: inherit; flex: 1; }
+  .popup .iconbtn { padding: 4px 8px; border: 1px solid #E2E8F0; background: transparent; border-radius: 4px;
+    font: inherit; font-size: 0.75rem; color: #475569; cursor: pointer; white-space: nowrap; }
+  [data-theme="dark"] .popup .iconbtn { border-color: #1F2933; color: #94A3B8; }
+  .popup .subhead { padding: 12px 16px 4px; margin: 0; font-size: 0.875rem; color: #475569; }
+  [data-theme="dark"] .popup .subhead { color: #94A3B8; }
+  .popup .urlbar { margin: 4px 16px 12px; padding: 6px 8px; background: #F5F7FA; border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem; color: #475569;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  [data-theme="dark"] .popup .urlbar { background: #131820; color: #94A3B8; }
+  .cwv-bar {
+    margin: 0 16px 12px; padding: 10px 12px; border-radius: 6px;
+    display: flex; align-items: center; gap: 10px; font-size: 0.875rem;
+    background: rgba(220, 38, 38, 0.1); color: #991B1B;
+  }
+  [data-theme="dark"] .cwv-bar { background: rgba(239, 68, 68, 0.15); color: #F87171; }
+  .cwv-bar .pill { width: 14px; height: 14px; border-radius: 50%; background: #DC2626; flex-shrink: 0; }
+  .cwv-bar .label { font-weight: 600; }
+  .cwv-bar .breakdown { flex: 1; text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75rem; opacity: 0.9; }
+  .popup .body { flex: 1; overflow-y: auto; padding: 0 16px 12px; }
+  h2.section-heading { margin: 16px 0 6px; padding: 0 0 6px; font-size: 0.75rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em; color: #475569; border-bottom: 1px solid #E2E8F0; }
+  [data-theme="dark"] h2.section-heading { color: #94A3B8; border-bottom-color: #1F2933; }
+
+  /* Third-party origin rows */
+  .tp-row {
+    display: flex; align-items: center; padding: 8px 4px; gap: 10px;
+    border-bottom: 1px solid #E2E8F0; font-size: 0.875rem;
+  }
+  [data-theme="dark"] .tp-row { border-bottom-color: #1F2933; }
+  .tp-row:last-of-type { border-bottom: none; }
+  .tp-vendor-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .tp-vendor { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .tp-vendor-name { font-weight: 600; font-size: 0.875rem; }
+  .tp-origin {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.7rem;
+    color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;
+  }
+  [data-theme="dark"] .tp-origin { color: #94A3B8; }
+  .tp-size { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem;
+    color: #475569; flex-shrink: 0; text-align: right; min-width: 60px; }
+  [data-theme="dark"] .tp-size { color: #94A3B8; }
+  .tp-count {
+    font-size: 0.65rem; color: #475569; background: #F5F7FA; padding: 1px 5px; border-radius: 4px;
+    flex-shrink: 0;
+  }
+  [data-theme="dark"] .tp-count { color: #94A3B8; background: #131820; }
+  .tp-empty {
+    padding: 12px 4px; font-size: 0.875rem; color: #475569; line-height: 1.5;
+  }
+  [data-theme="dark"] .tp-empty { color: #94A3B8; }
+
+  .popup .toast {
+    position: absolute; bottom: 36px; left: 16px; right: 16px;
+    padding: 8px 12px; background: #0F172A; color: #FFFFFF;
+    border-radius: 6px; font-size: 0.75rem; text-align: center;
+  }
+  [data-theme="dark"] .popup .toast { background: #E6EDF3; color: #0B0F14; }
+
+  .popup footer { height: 24px; padding: 0 16px; display: flex; align-items: center; justify-content: flex-end;
+    border-top: 1px solid #E2E8F0; }
+  [data-theme="dark"] .popup footer { border-top-color: #1F2933; }
+  .popup .version { font-size: 0.75rem; color: #475569; }
+  [data-theme="dark"] .popup .version { color: #94A3B8; }
+
+  /* Shared-HTML preview frame (wider) */
+  .share-preview {
+    grid-column: span 2; width: 792px; height: 520px;
+    border: 1px solid var(--page-border); border-radius: 10px;
+    overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    background: #FFFFFF; position: relative;
+  }
+  [data-theme="dark"] .share-preview { background: #0B0F14; }
+  .share-preview .preview-chrome {
+    display: flex; height: 28px; background: #ECECEC; border-bottom: 1px solid var(--page-border);
+    align-items: center; padding: 0 12px; gap: 6px;
+  }
+  [data-theme="dark"] .share-preview .preview-chrome { background: #131820; }
+  .share-preview .dots { display: flex; gap: 4px; }
+  .share-preview .dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD5E1; }
+  .share-preview .addr {
+    flex: 1; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 4px;
+    padding: 2px 8px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.7rem;
+    color: #475569;
+  }
+  [data-theme="dark"] .share-preview .addr { background: #0B0F14; border-color: #1F2933; color: #94A3B8; }
+  .share-doc { height: calc(100% - 28px); overflow-y: auto; padding: 32px; }
+  .share-doc h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .share-doc .meta { color: #475569; font-size: 0.875rem; margin: 0 0 24px; }
+  [data-theme="dark"] .share-doc .meta { color: #94A3B8; }
+  .share-doc .cwv-full {
+    padding: 14px 18px; border-radius: 8px;
+    background: rgba(220, 38, 38, 0.1); color: #991B1B;
+    display: flex; gap: 12px; align-items: center; margin-bottom: 24px;
+  }
+  [data-theme="dark"] .share-doc .cwv-full { background: rgba(239, 68, 68, 0.15); color: #F87171; }
+  .share-doc .cwv-full .big { font-weight: 600; font-size: 1.125rem; flex: 1; }
+  .share-doc .cwv-full .stats { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.875rem; }
+  .share-doc h2 { font-size: 0.875rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: #475569; margin: 24px 0 8px; padding-bottom: 6px; border-bottom: 1px solid #E2E8F0; }
+  [data-theme="dark"] .share-doc h2 { color: #94A3B8; border-bottom-color: #1F2933; }
+  .share-doc .doc-insight {
+    padding: 10px 0; border-bottom: 1px solid #E2E8F0;
+    display: grid; grid-template-columns: 14px 1fr auto; gap: 8px; align-items: baseline;
+  }
+  [data-theme="dark"] .share-doc .doc-insight { border-bottom-color: #1F2933; }
+  .share-doc .doc-insight .dot { width: 8px; height: 8px; border-radius: 50%; background: #DC2626; margin-top: 6px; }
+  .share-doc .doc-insight .title { font-weight: 600; }
+  .share-doc .doc-insight .savings { font-size: 0.75rem; color: #475569; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  [data-theme="dark"] .share-doc .doc-insight .savings { color: #94A3B8; }
+  .share-doc .doc-insight .fix { grid-column: 2 / 4; font-size: 0.875rem; color: #475569; margin-top: 4px; }
+  [data-theme="dark"] .share-doc .doc-insight .fix { color: #94A3B8; }
+  .share-doc .foot { font-size: 0.75rem; color: #475569; margin-top: 32px; padding-top: 16px; border-top: 1px solid #E2E8F0; }
+  [data-theme="dark"] .share-doc .foot { color: #94A3B8; border-top-color: #1F2933; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <h1 class="title">PulseVitals — v1.8 Third-party breakdown + Share-as-HTML</h1>
+    <p class="intro">
+      Seed <code>#19</code> adds a <strong>Third-party origins</strong> section that groups page resources by hostname
+      (and identifies known vendors — Google, Meta, HubSpot, etc.) with cumulative transfer and request counts per origin.
+      Seed <code>#21</code> adds a <strong>Share</strong> button that downloads a self-contained, styled HTML file of the
+      current report — openable by anyone in any browser, no extension required. The popup gains a third header button
+      (<code>History</code> / <code>Export</code> / <code>Share</code>).
+    </p>
+    <div class="toolbar"><button id="theme-toggle">Toggle dark / light</button></div>
+
+    <div class="grid">
+
+      <!-- Popup scrolled to show third-party section -->
+      <div>
+        <div class="card-label">Popup — Third-party origins section</div>
+        <div class="popup-frame">
+          <div class="popup">
+            <header>
+              <h1>PulseVitals</h1>
+              <button class="iconbtn">History</button>
+              <button class="iconbtn">Export</button>
+              <button class="iconbtn">Share</button>
+            </header>
+            <p class="subhead">Performance for this page</p>
+            <div class="urlbar">example.com/products</div>
+            <div class="cwv-bar">
+              <span class="pill"></span>
+              <span class="label">CWV: Poor</span>
+              <span class="breakdown">LCP 4.8s · CLS 0.32 · INP 610ms</span>
+            </div>
+            <div class="body">
+              <h2 class="section-heading">Third-party origins</h2>
+              <div class="tp-row">
+                <span class="tp-vendor-dot" style="background: #4285F4"></span>
+                <div class="tp-vendor">
+                  <span class="tp-vendor-name">Google</span>
+                  <span class="tp-origin">www.googletagmanager.com, google-analytics.com</span>
+                </div>
+                <span class="tp-count">14</span>
+                <span class="tp-size">1.1 MB</span>
+              </div>
+              <div class="tp-row">
+                <span class="tp-vendor-dot" style="background: #1877F2"></span>
+                <div class="tp-vendor">
+                  <span class="tp-vendor-name">Meta</span>
+                  <span class="tp-origin">connect.facebook.net</span>
+                </div>
+                <span class="tp-count">6</span>
+                <span class="tp-size">412 KB</span>
+              </div>
+              <div class="tp-row">
+                <span class="tp-vendor-dot" style="background: #FF7A59"></span>
+                <div class="tp-vendor">
+                  <span class="tp-vendor-name">HubSpot</span>
+                  <span class="tp-origin">js.hs-analytics.net</span>
+                </div>
+                <span class="tp-count">3</span>
+                <span class="tp-size">220 KB</span>
+              </div>
+              <div class="tp-row">
+                <span class="tp-vendor-dot" style="background: #F7941D"></span>
+                <div class="tp-vendor">
+                  <span class="tp-vendor-name">Hotjar</span>
+                  <span class="tp-origin">static.hotjar.com</span>
+                </div>
+                <span class="tp-count">2</span>
+                <span class="tp-size">180 KB</span>
+              </div>
+              <div class="tp-row">
+                <span class="tp-vendor-dot" style="background: #94A3B8"></span>
+                <div class="tp-vendor">
+                  <span class="tp-vendor-name">cdn.example-ads.com</span>
+                  <span class="tp-origin">cdn.example-ads.com</span>
+                </div>
+                <span class="tp-count">4</span>
+                <span class="tp-size">140 KB</span>
+              </div>
+            </div>
+            <footer><span class="version">v1.8</span></footer>
+          </div>
+        </div>
+      </div>
+
+      <!-- Popup no third-party -->
+      <div>
+        <div class="card-label">Popup — No third-party content</div>
+        <div class="popup-frame">
+          <div class="popup">
+            <header>
+              <h1>PulseVitals</h1>
+              <button class="iconbtn">History</button>
+              <button class="iconbtn">Export</button>
+              <button class="iconbtn">Share</button>
+            </header>
+            <p class="subhead">Performance for this page</p>
+            <div class="urlbar">example.com/clean</div>
+            <div class="cwv-bar" style="background: rgba(22, 163, 74, 0.1); color: #166534;">
+              <span class="pill" style="background: #16A34A"></span>
+              <span class="label">CWV: Good</span>
+              <span class="breakdown">LCP 1.2s · CLS 0.05 · INP 140ms</span>
+            </div>
+            <div class="body">
+              <h2 class="section-heading">Third-party origins</h2>
+              <div class="tp-empty">No third-party resources detected on this page. All assets load from <code>example.com</code>.</div>
+              <h2 class="section-heading">Top resources</h2>
+              <div style="color: #475569; font-size: 0.75rem; padding: 6px 4px;">main.js · 412 KB · 230 ms</div>
+            </div>
+            <footer><span class="version">v1.8</span></footer>
+          </div>
+        </div>
+      </div>
+
+      <!-- Popup after Share click (toast) -->
+      <div>
+        <div class="card-label">Popup — after Share click</div>
+        <div class="popup-frame">
+          <div class="popup">
+            <header>
+              <h1>PulseVitals</h1>
+              <button class="iconbtn">History</button>
+              <button class="iconbtn">Export</button>
+              <button class="iconbtn">Share</button>
+            </header>
+            <p class="subhead">Performance for this page</p>
+            <div class="urlbar">example.com/products</div>
+            <div class="cwv-bar">
+              <span class="pill"></span>
+              <span class="label">CWV: Poor</span>
+              <span class="breakdown">LCP 4.8s · CLS 0.32 · INP 610ms</span>
+            </div>
+            <div class="body">
+              <h2 class="section-heading">Insights</h2>
+              <div style="font-size: 0.75rem; color: #475569; padding: 6px 4px;">3 items · scrolls below</div>
+              <h2 class="section-heading">Third-party origins</h2>
+              <div style="font-size: 0.75rem; color: #475569; padding: 6px 4px;">5 origins · 2.1 MB total</div>
+            </div>
+            <div class="toast">Downloaded pulsevitals-report.html</div>
+            <footer><span class="version">v1.8</span></footer>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shared HTML file preview -->
+      <div class="share-preview">
+        <div class="preview-chrome">
+          <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+          <div class="addr">file:///…/Downloads/pulsevitals-report-2026-04-17.html</div>
+        </div>
+        <div class="share-doc">
+          <h1>PulseVitals Report</h1>
+          <p class="meta">example.com/products · Generated 2026-04-17 · <strong>Core Web Vitals: Poor</strong></p>
+          <div class="cwv-full">
+            <div class="big">Core Web Vitals: Poor</div>
+            <div class="stats">LCP 4.8s &nbsp; CLS 0.32 &nbsp; INP 610ms</div>
+          </div>
+          <h2>Insights</h2>
+          <div class="doc-insight">
+            <span class="dot"></span>
+            <span class="title">Largest image is 2.1 MB</span>
+            <span class="savings">~2.3 s</span>
+            <p class="fix">Compress <code>hero.jpg</code> to WebP or AVIF and serve a responsive srcset. Target under 200 KB above the fold.</p>
+          </div>
+          <div class="doc-insight">
+            <span class="dot"></span>
+            <span class="title">Layout shifts during load (CLS 0.32)</span>
+            <span class="savings">CLS −0.22</span>
+            <p class="fix">Reserve vertical space for late-loading content with min-height or aspect-ratio.</p>
+          </div>
+          <h2>Third-party origins</h2>
+          <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; color: #475569;">
+            Google (14) — 1.1 MB &nbsp;·&nbsp; Meta (6) — 412 KB &nbsp;·&nbsp; HubSpot (3) — 220 KB &nbsp;·&nbsp; Hotjar (2) — 180 KB
+          </div>
+          <h2>Timings</h2>
+          <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; color: #475569;">
+            navigationStart 0 · fetchStart 3 · responseStart 176 · domInteractive 580 · domComplete 783 · LCP 4,800
+          </div>
+          <p class="foot">Generated by PulseVitals · Static HTML · no extension required to view · <code>pulsevitals.app</code></p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <script>
+    const root = document.documentElement;
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) root.dataset.theme = "dark";
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+      root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PulseVitals — v2.0 Ship-readiness release</title>
+<style>
+  :root { --page-bg:#F5F5F7; --page-fg:#0F172A; --page-muted:#475569; --page-border:#E2E8F0; }
+  [data-theme="dark"] { --page-bg:#0A0A0C; --page-fg:#E6EDF3; --page-muted:#94A3B8; --page-border:#1F2933; }
+  html { background: var(--page-bg); }
+  body { margin:0; padding:32px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--page-bg); color: var(--page-fg); }
+  .page { max-width: 1400px; margin: 0 auto; }
+  h1.title { font-size: 1.5rem; margin: 0 0 4px; font-weight: 600; }
+  p.intro { color: var(--page-muted); margin: 0 0 24px; font-size: 0.875rem; max-width: 960px; line-height: 1.5; }
+  h2.section { font-size: 1.125rem; margin: 40px 0 8px; font-weight: 600; }
+  p.section-desc { color: var(--page-muted); font-size: 0.875rem; margin: 0 0 16px; max-width: 760px; }
+  .toolbar { margin-bottom: 24px; display: flex; gap: 8px; }
+  .toolbar button { padding: 6px 12px; border: 1px solid var(--page-border); background: transparent;
+    color: var(--page-fg); cursor: pointer; border-radius: 6px; font: inherit; font-size: 0.875rem; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, 380px); gap: 28px; }
+  .wide-grid { display: grid; grid-template-columns: repeat(auto-fill, 792px); gap: 28px; }
+  .card-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--page-muted); margin-bottom: 8px; }
+  .frame { border: 1px solid var(--page-border); border-radius: 10px;
+    overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.08); background: #FFFFFF; position: relative; }
+  [data-theme="dark"] .frame { background: #0B0F14; }
+  .popup-frame { width: 380px; height: 520px; }
+  .wide-frame { width: 792px; height: 560px; }
+
+  /* Shared popup chrome */
+  .popup { width: 100%; height: 100%; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #0F172A; background: #FFFFFF; display: flex; flex-direction: column; box-sizing: border-box; }
+  [data-theme="dark"] .popup { color: #E6EDF3; background: #0B0F14; }
+  .popup header { height: 48px; padding: 0 8px 0 16px; display: flex; align-items: center;
+    justify-content: space-between; border-bottom: 1px solid #E2E8F0; gap: 6px; }
+  [data-theme="dark"] .popup header { border-bottom-color: #1F2933; }
+  .popup h1 { margin: 0; font-size: 1.125rem; font-weight: 600; color: inherit; flex: 1; }
+  .popup .iconbtn { padding: 4px 8px; border: 1px solid #E2E8F0; background: transparent; border-radius: 4px;
+    font: inherit; font-size: 0.75rem; color: #475569; cursor: pointer; white-space: nowrap; }
+  [data-theme="dark"] .popup .iconbtn { border-color: #1F2933; color: #94A3B8; }
+  .popup .iconbtn.mobile-on { background: #E11D48; color: #FFFFFF; border-color: #E11D48; }
+  .popup .subhead { padding: 12px 16px 4px; margin: 0; font-size: 0.875rem; color: #475569; }
+  [data-theme="dark"] .popup .subhead { color: #94A3B8; }
+  .popup .urlbar { margin: 4px 16px 12px; padding: 6px 8px; background: #F5F7FA; border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem; color: #475569;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  [data-theme="dark"] .popup .urlbar { background: #131820; color: #94A3B8; }
+  .cwv-bar { margin: 0 16px 12px; padding: 10px 12px; border-radius: 6px;
+    display: flex; align-items: center; gap: 10px; font-size: 0.875rem; }
+  .cwv-bar.good { background: rgba(22,163,74,0.10); color: #166534; }
+  .cwv-bar.warn { background: rgba(217,119,6,0.12); color: #9A3412; }
+  .cwv-bar.bad { background: rgba(220,38,38,0.10); color: #991B1B; }
+  [data-theme="dark"] .cwv-bar.good { background: rgba(34,197,94,0.15); color:#4ADE80; }
+  [data-theme="dark"] .cwv-bar.warn { background: rgba(245,158,11,0.15); color:#FBBF24; }
+  [data-theme="dark"] .cwv-bar.bad { background: rgba(239,68,68,0.15); color:#F87171; }
+  .cwv-bar .pill { width:14px; height:14px; border-radius:50%; flex-shrink:0; }
+  .cwv-bar.good .pill { background:#16A34A; }
+  .cwv-bar.warn .pill { background:#D97706; }
+  .cwv-bar.bad .pill { background:#DC2626; }
+  .cwv-bar .label { font-weight:600; }
+  .cwv-bar .breakdown { flex:1; text-align:right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.7rem; opacity:0.9; }
+  .popup .body { flex:1; overflow-y:auto; padding: 0 16px 12px; }
+  h2.section-heading { margin:16px 0 6px; padding: 0 0 6px; font-size:0.7rem; font-weight:600;
+    text-transform:uppercase; letter-spacing:0.05em; color:#475569; border-bottom:1px solid #E2E8F0; }
+  [data-theme="dark"] h2.section-heading { color:#94A3B8; border-bottom-color:#1F2933; }
+  .popup footer { height:24px; padding: 0 16px; display:flex; align-items:center; justify-content: space-between;
+    border-top: 1px solid #E2E8F0; font-size: 0.7rem; color:#475569; }
+  [data-theme="dark"] .popup footer { border-top-color:#1F2933; color:#94A3B8; }
+  .popup footer a { color: #E11D48; text-decoration: none; }
+
+  /* Banners */
+  .banner { margin: 0 16px 12px; padding: 10px 12px; border-radius: 6px; font-size: 0.8rem;
+    display: flex; gap: 10px; align-items: flex-start; }
+  .banner.budget { background: rgba(220,38,38,0.10); color: #991B1B; border: 1px solid rgba(220,38,38,0.3); }
+  [data-theme="dark"] .banner.budget { background: rgba(239,68,68,0.15); color: #F87171; border-color: rgba(239,68,68,0.4); }
+  .banner .icon { font-size: 1rem; }
+  .banner .main { flex:1; }
+  .banner .main .title { font-weight: 600; }
+  .banner .main .detail { opacity: 0.85; margin-top: 2px; }
+  .banner .dismiss { background: none; border: none; cursor: pointer; color: inherit; font-size: 1rem; }
+
+  /* What's new card */
+  .whatsnew {
+    margin: 0 16px 12px; padding: 12px 14px; border-radius: 8px; font-size: 0.8rem;
+    background: linear-gradient(135deg, rgba(225,29,72,0.08), rgba(225,29,72,0.03));
+    border: 1px solid rgba(225,29,72,0.25);
+  }
+  [data-theme="dark"] .whatsnew { background: linear-gradient(135deg, rgba(244,63,94,0.15), rgba(244,63,94,0.05)); border-color: rgba(244,63,94,0.35); }
+  .whatsnew .tag { font-size:0.65rem; font-weight:600; text-transform:uppercase; letter-spacing:0.06em;
+    color:#E11D48; }
+  .whatsnew .title { font-weight:600; margin:2px 0 4px; }
+  .whatsnew .body-text { color:#475569; line-height:1.5; }
+  [data-theme="dark"] .whatsnew .body-text { color:#94A3B8; }
+  .whatsnew .actions { margin-top: 8px; display:flex; gap:8px; }
+  .whatsnew .actions button { font:inherit; font-size: 0.75rem; padding: 4px 8px;
+    border-radius: 4px; background: #E11D48; color: #FFFFFF; border: none; cursor: pointer; }
+  .whatsnew .actions button.ghost { background: transparent; color: #E11D48; border: 1px solid #E11D48; }
+
+  /* SEO / Axe / Platform / RUM - shared tile look */
+  .check-row { display: flex; align-items: center; gap: 8px; padding: 6px 4px; font-size: 0.875rem;
+    border-bottom: 1px solid #E2E8F0; }
+  [data-theme="dark"] .check-row { border-bottom-color: #1F2933; }
+  .check-row:last-of-type { border-bottom: none; }
+  .check-icon { width: 16px; height: 16px; border-radius: 50%; display: inline-flex;
+    align-items: center; justify-content: center; color: #FFFFFF; font-size: 0.65rem; flex-shrink:0; }
+  .check-icon.pass { background: #16A34A; }
+  .check-icon.fail { background: #DC2626; }
+  .check-icon.warn { background: #D97706; }
+  .check-label { flex: 1; }
+  .check-detail { font-size: 0.7rem; color: #475569; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  [data-theme="dark"] .check-detail { color: #94A3B8; }
+
+  /* Combined score tile */
+  .score-tile { margin: 0 0 12px; padding: 12px 14px; border-radius: 8px;
+    background: #F5F7FA; display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; }
+  [data-theme="dark"] .score-tile { background: #131820; }
+  .score-tile .big-num { font-size: 2rem; font-weight: 700; line-height: 1; }
+  .score-tile .big-num.good { color: #16A34A; }
+  .score-tile .big-num.warn { color: #D97706; }
+  .score-tile .big-num.bad { color: #DC2626; }
+  .score-tile .kicker { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: #475569; }
+  [data-theme="dark"] .score-tile .kicker { color: #94A3B8; }
+  .score-tile .subtitle { font-size: 0.875rem; font-weight: 600; margin: 2px 0 4px; }
+  .score-tile .desc { font-size: 0.7rem; color: #475569; }
+  [data-theme="dark"] .score-tile .desc { color: #94A3B8; }
+
+  /* RUM histogram bars */
+  .hist { display: flex; align-items: flex-end; gap: 4px; height: 60px; padding: 8px 4px; }
+  .hist .bar { flex: 1; background: #CBD5E1; border-radius: 2px 2px 0 0; }
+  [data-theme="dark"] .hist .bar { background: #1F2933; }
+  .hist .bar.active { background: #E11D48; }
+  .hist-legend { display: flex; justify-content: space-between; font-size: 0.65rem; color: #475569;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; padding: 0 4px; }
+  [data-theme="dark"] .hist-legend { color: #94A3B8; }
+  .rum-stat { display: flex; justify-content: space-between; padding: 4px 4px; font-size: 0.8rem; }
+  .rum-stat .val { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #475569; }
+  [data-theme="dark"] .rum-stat .val { color: #94A3B8; }
+
+  /* Third-party (v1.8) */
+  .tp-row { display: flex; align-items: center; padding: 6px 4px; gap: 10px;
+    border-bottom: 1px solid #E2E8F0; font-size: 0.875rem; }
+  [data-theme="dark"] .tp-row { border-bottom-color: #1F2933; }
+  .tp-row:last-of-type { border-bottom: none; }
+  .tp-vendor-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .tp-vendor { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .tp-vendor-name { font-weight: 600; font-size: 0.875rem; }
+  .tp-origin { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.65rem;
+    color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  [data-theme="dark"] .tp-origin { color: #94A3B8; }
+  .tp-size { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem;
+    color: #475569; flex-shrink: 0; text-align: right; min-width: 54px; }
+  [data-theme="dark"] .tp-size { color: #94A3B8; }
+  .tp-count { font-size: 0.62rem; color: #475569; background: #F5F7FA; padding: 1px 5px; border-radius: 4px; }
+  [data-theme="dark"] .tp-count { color: #94A3B8; background: #131820; }
+
+  /* Platform tips styled within insights */
+  .insight-card {
+    padding: 10px 4px; border-bottom: 1px solid #E2E8F0;
+    display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: baseline;
+  }
+  [data-theme="dark"] .insight-card { border-bottom-color: #1F2933; }
+  .insight-card .dot { width: 8px; height: 8px; border-radius: 50%; background: #DC2626; margin-top: 4px; }
+  .insight-card .dot.warn { background: #D97706; }
+  .insight-card .dot.platform { background: #E11D48; }
+  .insight-card .title { font-weight: 600; font-size: 0.875rem; }
+  .insight-card .saving { font-size: 0.7rem; color: #475569;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  [data-theme="dark"] .insight-card .saving { color: #94A3B8; }
+  .insight-card .fix { grid-column: 2 / 4; font-size: 0.7rem; color: #475569; margin: 4px 0 0; line-height: 1.4; }
+  [data-theme="dark"] .insight-card .fix { color: #94A3B8; }
+  .insight-card .platform-tag {
+    font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    color: #E11D48; border: 1px solid rgba(225,29,72,0.3); padding: 1px 6px; border-radius: 4px;
+    margin-right: 4px;
+  }
+
+  /* Consent + first-run full-card states */
+  .full-card { flex: 1; display: flex; flex-direction: column; padding: 24px 20px; justify-content: center; gap: 12px; }
+  .full-card .logo { width: 44px; height: 44px; background: #E11D48; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+  .full-card .logo svg { width: 30px; height: 30px; }
+  .full-card h2 { font-size: 1.125rem; font-weight: 600; margin: 0; }
+  .full-card p { font-size: 0.8rem; color: #475569; line-height: 1.5; margin: 0; }
+  [data-theme="dark"] .full-card p { color: #94A3B8; }
+  .full-card ul { font-size: 0.8rem; color: #475569; margin: 0; padding-left: 18px; line-height: 1.6; }
+  [data-theme="dark"] .full-card ul { color: #94A3B8; }
+  .full-card .cta-row { display: flex; gap: 8px; margin-top: 8px; }
+  .full-card .cta-primary { flex: 1; padding: 9px 12px; background: #E11D48; color: #FFFFFF;
+    border: none; border-radius: 6px; font: inherit; font-weight: 600; cursor: pointer; }
+  .full-card .cta-ghost { padding: 9px 12px; background: transparent; color: #E11D48;
+    border: 1px solid #E11D48; border-radius: 6px; font: inherit; cursor: pointer; }
+
+  /* Wide-frame content (options, batch, competitor) */
+  .page-content { padding: 20px 28px; height: 100%; overflow-y: auto; box-sizing: border-box; }
+  .page-content h1 { font-size: 1.25rem; margin: 0 0 4px; font-weight: 600; }
+  .page-content .meta { color: #475569; font-size: 0.875rem; margin: 0 0 16px; }
+  [data-theme="dark"] .page-content .meta { color: #94A3B8; }
+  .opt-row { display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 0; border-bottom: 1px solid #E2E8F0; gap: 16px; }
+  [data-theme="dark"] .opt-row { border-bottom-color: #1F2933; }
+  .opt-row .opt-label { font-weight: 600; font-size: 0.9rem; }
+  .opt-row .opt-desc { font-size: 0.75rem; color: #475569; margin-top: 2px; }
+  [data-theme="dark"] .opt-row .opt-desc { color: #94A3B8; }
+  .toggle { width: 36px; height: 20px; background: #CBD5E1; border-radius: 10px; position: relative;
+    cursor: pointer; flex-shrink: 0; }
+  .toggle.on { background: #E11D48; }
+  .toggle::before { content: ""; position: absolute; width: 16px; height: 16px; background: #FFFFFF;
+    border-radius: 50%; top: 2px; left: 2px; transition: left 0.15s; }
+  .toggle.on::before { left: 18px; }
+  .opt-input { font: inherit; font-size: 0.8rem; padding: 4px 8px; border: 1px solid #E2E8F0;
+    border-radius: 4px; background: transparent; color: inherit; width: 120px; }
+  [data-theme="dark"] .opt-input { border-color: #1F2933; }
+  .allowlist { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem;
+    background: #F5F7FA; padding: 8px; border-radius: 4px; min-height: 60px;
+    color: #475569; white-space: pre-wrap; }
+  [data-theme="dark"] .allowlist { background: #131820; color: #94A3B8; }
+
+  /* Batch / competitor tables */
+  .wtable { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin-top: 8px; }
+  .wtable th { text-align: left; padding: 8px 4px; font-weight: 600; color: #475569;
+    border-bottom: 1px solid #E2E8F0; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  [data-theme="dark"] .wtable th { color: #94A3B8; border-bottom-color: #1F2933; }
+  .wtable td { padding: 8px 4px; border-bottom: 1px solid #E2E8F0; font-size: 0.85rem; }
+  [data-theme="dark"] .wtable td { border-bottom-color: #1F2933; }
+  .wtable td.num { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; text-align: right; }
+  .wtable .verdict-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+  .verdict-dot.good { background: #16A34A; }
+  .verdict-dot.warn { background: #D97706; }
+  .verdict-dot.bad { background: #DC2626; }
+  .wtable .winner { color: #16A34A; font-weight: 600; }
+
+  .input-cluster { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .input-cluster input { flex: 1; min-width: 200px; font: inherit; font-size: 0.85rem;
+    padding: 6px 10px; border: 1px solid #E2E8F0; border-radius: 4px;
+    background: transparent; color: inherit;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  [data-theme="dark"] .input-cluster input { border-color: #1F2933; }
+  .input-cluster button { padding: 6px 16px; background: #E11D48; color: #FFFFFF; border: none;
+    border-radius: 4px; font: inherit; cursor: pointer; font-weight: 600; }
+
+  /* Static HTML preview frames */
+  .doc-page { padding: 32px 40px; height: 100%; overflow-y: auto; box-sizing: border-box; font-size: 0.85rem;
+    line-height: 1.6; color: #1F2937; }
+  [data-theme="dark"] .doc-page { color: #D1D5DB; }
+  .doc-page h1 { font-size: 1.5rem; margin: 0 0 12px; }
+  .doc-page h2 { font-size: 1rem; margin: 20px 0 8px; color: #475569; text-transform: uppercase;
+    letter-spacing: 0.05em; font-size: 0.75rem; }
+  [data-theme="dark"] .doc-page h2 { color: #94A3B8; }
+  .doc-page p { margin: 0 0 10px; }
+  .browser-chrome { display: flex; height: 26px; background: #ECECEC; border-bottom: 1px solid var(--page-border);
+    align-items: center; padding: 0 10px; gap: 6px; }
+  [data-theme="dark"] .browser-chrome { background: #131820; }
+  .browser-chrome .dot { width: 8px; height: 8px; border-radius: 50%; background: #CBD5E1; }
+  .browser-chrome .addr { flex: 1; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 4px;
+    padding: 1px 8px; font: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.65rem; color: #475569;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  [data-theme="dark"] .browser-chrome .addr { background: #0B0F14; border-color: #1F2933; color: #94A3B8; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <h1 class="title">PulseVitals — v2.0 Ship-readiness release</h1>
+    <p class="intro">
+      Single consolidated mock for the v2.0 release. Bundles 21 remaining seeds (feature, UX polish, and shippability)
+      minus the user's explicit exclusions (unit tests, functional tests, external services). Each frame is rendered at
+      the production surface dimensions. Approving this mock authorises the Dev stage to ship all features.
+    </p>
+    <div class="toolbar"><button id="theme-toggle">Toggle dark / light</button></div>
+
+    <!-- SECTION: Popup enhancements -->
+    <h2 class="section">§ 1. Popup enhancements</h2>
+    <p class="section-desc">All added inline in the existing 380×520 popup. New header button (Share), new sections
+    (Third-party, SEO checks, Axe+CWV score, RUM histogram), new banners (Budget alert, What's-new).</p>
+
+    <div class="grid">
+
+      <!-- 1.1 Header + Share (#21, #19, #27 mobile toggle, #45 bug link) -->
+      <div>
+        <div class="card-label">1.1 New header: Share · Mobile · Link</div>
+        <div class="frame popup-frame"><div class="popup">
+          <header>
+            <h1>PulseVitals</h1>
+            <button class="iconbtn mobile-on" title="Re-run as mobile">📱</button>
+            <button class="iconbtn">History</button>
+            <button class="iconbtn">Export</button>
+            <button class="iconbtn">Share</button>
+          </header>
+          <p class="subhead">Performance for this page · Mobile emulation</p>
+          <div class="urlbar">example.com/products</div>
+          <div class="cwv-bar warn"><span class="pill"></span><span class="label">CWV: Needs improvement</span>
+            <span class="breakdown">LCP 3.1s · CLS 0.08 · INP 380ms</span></div>
+          <div class="body"><div style="color:#475569;font-size:0.75rem;padding:6px 4px;">Tapping <em>Mobile</em> re-runs the report under a mobile viewport (375 px) with throttled CPU/network. Tapping it again reverts to desktop.</div></div>
+          <footer><a href="#">Report an issue</a><span>v2.0</span></footer>
+        </div></div>
+      </div>
+
+      <!-- 1.2 Third-party (#19) + Share toast (#21) -->
+      <div>
+        <div class="card-label">1.2 Third-party origins + Share toast</div>
+        <div class="frame popup-frame"><div class="popup">
+          <header><h1>PulseVitals</h1>
+            <button class="iconbtn">📱</button>
+            <button class="iconbtn">History</button>
+            <button class="iconbtn">Export</button>
+            <button class="iconbtn">Share</button>
+          </header>
+          <p class="subhead">Performance for this page</p>
+          <div class="urlbar">example.com/products</div>
+          <div class="body">
+            <h2 class="section-heading">Third-party origins</h2>
+            <div class="tp-row"><span class="tp-vendor-dot" style="background:#4285F4"></span>
+              <div class="tp-vendor"><span class="tp-vendor-name">Google</span><span class="tp-origin">googletagmanager, google-analytics</span></div>
+              <span class="tp-count">14</span><span class="tp-size">1.1 MB</span></div>
+            <div class="tp-row"><span class="tp-vendor-dot" style="background:#1877F2"></span>
+              <div class="tp-vendor"><span class="tp-vendor-name">Meta</span><span class="tp-origin">connect.facebook.net</span></div>
+              <span class="tp-count">6</span><span class="tp-size">412 KB</span></div>
+            <div class="tp-row"><span class="tp-vendor-dot" style="background:#FF7A59"></span>
+              <div class="tp-vendor"><span class="tp-vendor-name">HubSpot</span><span class="tp-origin">js.hs-analytics.net</span></div>
+              <span class="tp-count">3</span><span class="tp-size">220 KB</span></div>
+            <div class="tp-row"><span class="tp-vendor-dot" style="background:#F7941D"></span>
+              <div class="tp-vendor"><span class="tp-vendor-name">Hotjar</span><span class="tp-origin">static.hotjar.com</span></div>
+              <span class="tp-count">2</span><span class="tp-size">180 KB</span></div>
+          </div>
+          <div style="position:absolute; bottom:36px; left:16px; right:16px; padding:8px 12px; background:#0F172A; color:#FFFFFF; border-radius:6px; font-size:0.75rem; text-align:center;">Downloaded pulsevitals-report.html</div>
+          <footer><a href="#">Report an issue</a><span>v2.0</span></footer>
+        </div></div>
+      </div>
+
+      <!-- 1.3 SEO section (#25) -->
+      <div>
+        <div class="card-label">1.3 SEO sanity checks</div>
+        <div class="frame popup-frame"><div class="popup">
+          <header><h1>PulseVitals</h1>
+            <button class="iconbtn">📱</button>
+            <button class="iconbtn">History</button>
+            <button class="iconbtn">Export</button>
+            <button class="iconbtn">Share</button>
+          </header>
+          <p class="subhead">Performance for this page</p>
+          <div class="urlbar">example.com/products</div>
+          <div class="body">
+            <h2 class="section-heading">SEO checks</h2>
+            <div class="check-row"><span class="check-icon pass">✓</span><span class="check-label">Title tag</span><span class="check-detail">42 chars</span></div>
+            <div class="check-row"><span class="check-icon pass">✓</span><span class="check-label">Meta description</span><span class="check-detail">148 chars</span></div>
+            <div class="check-row"><span class="check-icon fail">✕</span><span class="check-label">Exactly one &lt;h1&gt;</span><span class="check-detail">found 3</span></div>
+            <div class="check-row"><span class="check-icon pass">✓</span><span class="check-label">Canonical URL</span><span class="check-detail">set</span></div>
+            <div class="check-row"><span class="check-icon warn">!</span><span class="check-label">Open Graph image</span><span class="check-detail">missing</span></div>
+            <div class="check-row"><span class="check-icon pass">✓</span><span class="check-label">Viewport meta</span><span class="check-detail">responsive</span></div>
+            <div class="check-row"><span class="check-icon pass">✓</span><span class="check-label">Structured data (JSON-LD)</span><span class="check-detail">Product schema</span></div>
+          </div>
+          <footer><a href="#">Report an issue</a><span>v2.0</span></footer>
+        </div></div>
+      </div>
+
+      <!-- 1.4 Axe + CWV combined (#28) -->
+      <div>
+        <div class="card-label">1.4 Accessibility + CWV combined score</div>
+        <div class="frame popup-frame"><div class="popup">
+          <header><h1>PulseVitals</h1>
+            <button class="iconbtn">📱</button>
+            <button class="iconbtn">History</button>
+            <button class="iconbtn">Export</button>
+            <button class="iconbtn">Share</button>
+          </header>
+          <p class="subhead">Performance for this page</p>
+          <div class="urlbar">example.com/products</div>
+          <div class="body">
+            <h2 class="section-heading">Health score</h2>
+            <div class="score-tile">
+              <div class="big-num warn">72</div>
+              <div><div class="kicker">Overall</div><div class="subtitle">CWV passing · 3 a11y issues</div>
+                <div class="desc">Score = min(CWV pass, 100 − 10 × axe-violations).</div></div>
+            </div>
+            <h2 class="section-heading">Accessibility issues</h2>
+            <div class="check-row"><span class="check-icon fail">✕</span><span class="check-label">Images without alt text</span><span class="check-detail">2 nodes</span></div>
+            <div class="check-row"><span class="check-icon fail">✕</span><span class="check-label">Contrast below 4.5:1</span><span class="check-detail">1 node</span></div>
+            <div class="check-row"><span class="check-icon warn">!</span><span class="check-label">Form input without label</span><span class="check-detail">1 node</span></div>
+          </div>
+          <footer><a href="#">Report an issue</a><span>v2.0</span></footer>
+        </div></div>
+      </div>
+
+      <!-- 1.5 RUM histogram (#23) -->
+      <div>
+        <div class="card-label">1.5 RUM histogram (last 20 visits)</div>
+        <div class="frame popup-frame"><div class="popup">
+          <header><h1>PulseVitals</h1>
+            <button class="iconbtn">📱</button>
+            <button class="iconbtn">History</button>
+            <button class="iconbtn">Export</button>
+            <button class="iconbtn">Share</button>
+          </header>
+          <p class="subhead">Performance for this page</p>
+          <div class="urlbar">example.com/products</div>
+          <div class="body">
+            <h2 class="section-heading">Your session · LCP distribution</h2>
+            <div class="hist">
+              <div class="bar" style="height:10%"></div>
+              <div class="bar" style="height:25%"></div>
+              <div class="bar" style="height:60%"></div>
+              <div class="bar active" style="height:95%"></div>
+              <div class="bar" style="height:75%"></div>
+              <div class="bar" style="height:40%"></div>
+              <div class="bar" style="height:28%"></div>
+              <div class="bar" style="height:15%"></div>
+              <div class="bar" style="height:10%"></div>
+            </div>
+            <div class="hist-legend"><span>0.8s</span><span>1.2s</span><span>1.6s</span><span>2.0s</span><span>2.4s</span><span>3.0s</span></div>
+            <div class="rum-stat"><span>Median</span><span class="val">1,850 ms</span></div>
+            <div class="rum-stat"><span>p95</span><span class="val">3,420 ms</span></div>
+            <div class="rum-stat"><span>Samples</span><span class="val">18 of 20</span></div>
+            <h2 class="section-heading">CLS · INP distributions</h2>
+            <div class="rum-stat"><span>CLS median</span><span class="val">0.08</span></div>
+            <div class="rum-stat"><span>INP median</span><span class="val">210 ms</span></div>
+          </div>
+          <footer><a href="#">Report an issue</a><span>v2.0</span></footer>
+        </div></div>
+      </div>
+
+      <!-- 1.6 Budget alert banner (#22) -->
+      <div>
+        <div class="card-label">1.6 Performance-budget alert</div>
+        <div class="frame popup-frame"><div class="popup">
+          <header><h1>PulseVitals</h1>
+            <button class="iconbtn">📱</button>
+            <button class="iconbtn">History</button>
+            <button class="iconbtn">Export</button>
+            <button class="iconbtn">Share</button>
+          </header>
+          <p class="subhead">Performance for this page</p>
+          <div class="urlbar">example.com/checkout</div>
+          <div class="banner budget">
+            <span class="icon">⚠︎</span>
+            <div class="main">
+              <div class="title">Budget exceeded: LCP 4,800 ms &gt; 2,500 ms</div>
+              <div class="detail">This page has regressed against its budget. Set in Options.</div>
+            </div>
+            <button class="dismiss" aria-label="Dismiss">×</button>
+          </div>
+          <div class="cwv-bar bad"><span class="pill"></span><span class="label">CWV: Poor</span>
+            <span class="breakdown">LCP 4.8s · CLS 0.32 · INP 610ms</span></div>
+          <div class="body">
+            <h2 class="section-heading">Insights</h2>
+            <div style="color:#475569;font-size:0.75rem;padding:6px 4px;">5 items · scrolls below</div>
+          </div>
+          <footer><a href="#">Report an issue</a><span>v2.0</span></footer>
+        </div></div>
+      </div>
+
+      <!-- 1.7 Platform tips in insights (#24) -->
+      <div>
+        <div class="card-label">1.7 Platform-aware tips (Shopify detected)</div>
+        <div class="frame popup-frame"><div class="popup">
+          <header><h1>PulseVitals</h1>
+            <button class="iconbtn">📱</button>
+            <button class="iconbtn">History</button>
+            <button class="iconbtn">Export</button>
+            <button class="iconbtn">Share</button>
+          </header>
+          <p class="subhead">Performance for this page · Shopify detected</p>
+          <div class="urlbar">shop.example.com/products/widget</div>
+          <div class="body">
+            <h2 class="section-heading">Insights</h2>
+            <div class="insight-card">
+              <span class="dot"></span>
+              <span class="title">Largest image is 2.1 MB</span>
+              <span class="saving">~2.3 s</span>
+              <p class="fix">Compress <code>hero.jpg</code> to WebP or AVIF.</p>
+            </div>
+            <div class="insight-card">
+              <span class="dot platform"></span>
+              <span class="title"><span class="platform-tag">Shopify</span>Enable <code>image_url(format:'webp')</code></span>
+              <span class="saving">~1.4 s</span>
+              <p class="fix">Shopify's Liquid image URL filter can output WebP in-template. No app needed.</p>
+            </div>
+            <div class="insight-card">
+              <span class="dot platform"></span>
+              <span class="title"><span class="platform-tag">Shopify</span>Lazy-load product-grid thumbnails</span>
+              <span class="saving">~0.6 s</span>
+              <p class="fix">Add <code>loading="lazy"</code> to product-card images below the fold.</p>
+            </div>
+          </div>
+          <footer><a href="#">Report an issue</a><span>v2.0</span></footer>
+        </div></div>
+      </div>
+
+      <!-- 1.8 What's-new card (#50) -->
+      <div>
+        <div class="card-label">1.8 What's-new card (v2.0 post-update)</div>
+        <div class="frame popup-frame"><div class="popup">
+          <header><h1>PulseVitals</h1>
+            <button class="iconbtn">📱</button>
+            <button class="iconbtn">History</button>
+            <button class="iconbtn">Export</button>
+            <button class="iconbtn">Share</button>
+          </header>
+          <p class="subhead">Performance for this page</p>
+          <div class="urlbar">example.com/</div>
+          <div class="whatsnew">
+            <div class="tag">New in v2.0</div>
+            <div class="title">Ship-readiness release</div>
+            <div class="body-text">Third-party breakdown, SEO checks, platform-aware tips, RUM histogram, budgets, and a shareable HTML export. Full list in changelog.</div>
+            <div class="actions">
+              <button>Got it</button>
+              <button class="ghost">Changelog</button>
+            </div>
+          </div>
+          <div class="body">
+            <h2 class="section-heading">Insights</h2>
+            <div style="color:#475569;font-size:0.75rem;padding:6px 4px;">Content below...</div>
+          </div>
+          <footer><a href="#">Report an issue</a><span>v2.0</span></footer>
+        </div></div>
+      </div>
+
+    </div>
+
+    <!-- SECTION: First-experience flows -->
+    <h2 class="section">§ 2. First-experience flows (#41 consent · #47 onboarding)</h2>
+    <p class="section-desc">Two full-popup flows the user sees exactly once: on first install (consent), then on first
+    successful measurement (onboarding tip).</p>
+
+    <div class="grid">
+
+      <!-- 2.1 Consent (#41) -->
+      <div>
+        <div class="card-label">2.1 Consent disclosure (first install)</div>
+        <div class="frame popup-frame"><div class="popup">
+          <div class="full-card">
+            <div class="logo"><svg viewBox="0 0 128 128"><path d="M 16 64 L 40 64 L 48 56 L 56 64 L 68 24 L 76 104 L 84 64 L 112 64" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+            <h2>Welcome to PulseVitals</h2>
+            <p>Before we start measuring, here's what PulseVitals does with your data:</p>
+            <ul>
+              <li>Measures <strong>only</strong> the active tab's performance data.</li>
+              <li>Stores recent-run history <strong>on your device</strong> in browser storage.</li>
+              <li><strong>Never</strong> sends data to any server. No telemetry.</li>
+              <li>You can clear history anytime from Options.</li>
+            </ul>
+            <div class="cta-row">
+              <button class="cta-primary">I understand — continue</button>
+            </div>
+            <p style="font-size:0.7rem;">By clicking continue you agree to the <a href="#" style="color:#E11D48;">privacy policy</a>.</p>
+          </div>
+          <footer><span>v2.0</span></footer>
+        </div></div>
+      </div>
+
+      <!-- 2.2 First-run onboarding (#47) -->
+      <div>
+        <div class="card-label">2.2 First-run onboarding tip</div>
+        <div class="frame popup-frame"><div class="popup">
+          <div class="full-card">
+            <div class="logo"><svg viewBox="0 0 128 128"><path d="M 16 64 L 40 64 L 48 56 L 56 64 L 68 24 L 76 104 L 84 64 L 112 64" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+            <h2>You're ready</h2>
+            <p>Three things to try:</p>
+            <ul>
+              <li><strong>Glance at the icon</strong> — color tells you if this page passes Core Web Vitals.</li>
+              <li><strong>Open the popup</strong> for plain-English fixes and a third-party breakdown.</li>
+              <li><strong>Hit Share</strong> to send a one-file report to a teammate or client.</li>
+            </ul>
+            <div class="cta-row">
+              <button class="cta-primary">Open sample report</button>
+              <button class="cta-ghost">Skip</button>
+            </div>
+          </div>
+          <footer><span>v2.0</span></footer>
+        </div></div>
+      </div>
+
+    </div>
+
+    <!-- SECTION: New dedicated pages -->
+    <h2 class="section">§ 3. Dedicated pages (#8 options · #18 batch · #20 competitor)</h2>
+    <p class="section-desc">Opened from the popup's Options icon or the extension-context menu. Wider than the 380 px popup.</p>
+
+    <div class="wide-grid">
+
+      <!-- 3.1 Options page (#8) -->
+      <div>
+        <div class="card-label">3.1 Options page</div>
+        <div class="frame wide-frame">
+          <div class="page-content">
+            <h1>PulseVitals Options</h1>
+            <p class="meta">Preferences are stored in <code>chrome.storage.sync</code> and roam across your Chrome profile.</p>
+
+            <h2 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:#475569;margin-top:16px;">Measurement</h2>
+            <div class="opt-row">
+              <div><div class="opt-label">Auto-measure on every page load</div><div class="opt-desc">Captures CWV + timings silently; popup reads cached data.</div></div>
+              <div class="toggle on"></div>
+            </div>
+            <div class="opt-row">
+              <div><div class="opt-label">Mobile-default emulation</div><div class="opt-desc">Always re-run reports under mobile viewport + CPU throttle.</div></div>
+              <div class="toggle"></div>
+            </div>
+            <div class="opt-row">
+              <div><div class="opt-label">Show platform-aware tips</div><div class="opt-desc">Detect Shopify / WordPress / Webflow / Next.js and append specific fixes.</div></div>
+              <div class="toggle on"></div>
+            </div>
+
+            <h2 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:#475569;margin-top:24px;">Per-site allowlist / denylist</h2>
+            <div class="opt-row">
+              <div><div class="opt-label">Denylist</div><div class="opt-desc">Do not measure on these origins.</div></div>
+              <div class="allowlist">https://banking.example.com
+https://admin.internal</div>
+            </div>
+
+            <h2 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:#475569;margin-top:24px;">Performance budgets</h2>
+            <div class="opt-row">
+              <div><div class="opt-label">Budget · LCP</div><div class="opt-desc">Alert when LCP exceeds this on any monitored URL.</div></div>
+              <input class="opt-input" value="2500 ms" />
+            </div>
+            <div class="opt-row">
+              <div><div class="opt-label">Budget · CLS</div><div class="opt-desc">&nbsp;</div></div>
+              <input class="opt-input" value="0.10" />
+            </div>
+            <div class="opt-row">
+              <div><div class="opt-label">Budget · INP</div><div class="opt-desc">&nbsp;</div></div>
+              <input class="opt-input" value="200 ms" />
+            </div>
+
+            <h2 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:#475569;margin-top:24px;">Data</h2>
+            <div class="opt-row">
+              <div><div class="opt-label">Clear history</div><div class="opt-desc">Remove all stored snapshots across all origins.</div></div>
+              <button class="cta-ghost" style="padding:6px 14px;">Clear…</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3.2 Batch audit (#18) -->
+      <div>
+        <div class="card-label">3.2 Batch multi-URL audit</div>
+        <div class="frame wide-frame">
+          <div class="page-content">
+            <h1>Batch audit</h1>
+            <p class="meta">Paste up to 50 URLs. PulseVitals opens each in a background tab, measures CWV + transfer size, and produces a sortable ranking. CSV export preserved.</p>
+            <div class="input-cluster">
+              <input value="https://example.com/home, https://example.com/pricing, https://example.com/checkout, ..." />
+              <button>Run audit</button>
+            </div>
+            <div style="font-size:0.75rem;color:#475569;margin-bottom:8px;">Completed 8 of 50 · ETA 42 s</div>
+            <table class="wtable">
+              <thead><tr><th>URL</th><th>CWV</th><th class="num">LCP</th><th class="num">CLS</th><th class="num">INP</th><th class="num">Transfer</th><th class="num">TTFB</th></tr></thead>
+              <tbody>
+                <tr><td>/checkout</td><td><span class="verdict-dot bad"></span>Poor</td><td class="num">4,800</td><td class="num">0.32</td><td class="num">610</td><td class="num">2.1 MB</td><td class="num">780</td></tr>
+                <tr><td>/products</td><td><span class="verdict-dot warn"></span>NI</td><td class="num">3,100</td><td class="num">0.08</td><td class="num">380</td><td class="num">1.6 MB</td><td class="num">420</td></tr>
+                <tr><td>/pricing</td><td><span class="verdict-dot good"></span>Good</td><td class="num">1,600</td><td class="num">0.05</td><td class="num">180</td><td class="num">620 KB</td><td class="num">180</td></tr>
+                <tr><td>/about</td><td><span class="verdict-dot good"></span>Good</td><td class="num">1,420</td><td class="num">0.04</td><td class="num">160</td><td class="num">480 KB</td><td class="num">165</td></tr>
+                <tr><td>/home</td><td><span class="verdict-dot warn"></span>NI</td><td class="num">2,900</td><td class="num">0.11</td><td class="num">240</td><td class="num">1.1 MB</td><td class="num">310</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3.3 Competitor comparison (#20) -->
+      <div>
+        <div class="card-label">3.3 Competitor comparison</div>
+        <div class="frame wide-frame">
+          <div class="page-content">
+            <h1>Competitor comparison</h1>
+            <p class="meta">Enter up to 3 competitor URLs. PulseVitals measures each in the background and produces a head-to-head chart you can screenshot and share.</p>
+            <div class="input-cluster">
+              <input value="https://you.example.com" />
+              <input value="https://competitor-a.com" />
+              <input value="https://competitor-b.com" />
+              <button>Compare</button>
+            </div>
+            <table class="wtable">
+              <thead><tr><th>Site</th><th>Verdict</th><th class="num">LCP</th><th class="num">CLS</th><th class="num">INP</th><th class="num">Total KB</th></tr></thead>
+              <tbody>
+                <tr><td class="winner">you.example.com</td><td><span class="verdict-dot good"></span>Good</td><td class="num winner">1,480</td><td class="num">0.06</td><td class="num winner">150</td><td class="num winner">620</td></tr>
+                <tr><td>competitor-a.com</td><td><span class="verdict-dot warn"></span>NI</td><td class="num">2,840</td><td class="num">0.09</td><td class="num">290</td><td class="num">1,420</td></tr>
+                <tr><td>competitor-b.com</td><td><span class="verdict-dot bad"></span>Poor</td><td class="num">4,620</td><td class="num">0.31</td><td class="num">540</td><td class="num">2,960</td></tr>
+              </tbody>
+            </table>
+            <p style="margin-top:24px; font-size:0.8rem; color:#475569;">📸 Click "Share comparison" to download a branded 1200×630 PNG suitable for Twitter, LinkedIn, or Slack.</p>
+            <button class="cta-ghost" style="padding:8px 14px;">Share comparison</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SECTION: Static HTML artifacts -->
+    <h2 class="section">§ 4. Static artifacts (#31 privacy · #40 terms)</h2>
+    <p class="section-desc">Both files ship with the extension and are also suitable for hosting on the PulseVitals
+    domain when that lands. Printed copies of the full file content.</p>
+
+    <div class="wide-grid">
+
+      <!-- 4.1 Privacy policy -->
+      <div>
+        <div class="card-label">4.1 Privacy policy (privacy.html)</div>
+        <div class="frame wide-frame">
+          <div class="browser-chrome">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <div class="addr">file://…/privacy.html  or  https://pulsevitals.app/privacy</div>
+          </div>
+          <div class="doc-page">
+            <h1>Privacy policy</h1>
+            <p><strong>Last updated:</strong> 2026-04-17</p>
+            <h2>What we collect</h2>
+            <p>PulseVitals measures page-load performance metrics (LCP, CLS, INP, nav-timing, resources, storage size) from tabs you visit. It runs <em>only</em> on the active tab while the extension is installed.</p>
+            <h2>What we store</h2>
+            <p>Measurement snapshots are stored locally in <code>chrome.storage.local</code>, capped at 10 snapshots per origin. Options are stored in <code>chrome.storage.sync</code> and roam across your Chrome profile.</p>
+            <h2>What we don't do</h2>
+            <p>We don't send your data to any server. No telemetry endpoint, no crash reporting, no analytics. Everything stays on your device.</p>
+            <h2>Your controls</h2>
+            <p>Clear all history from the Options page. Uninstalling the extension deletes all stored data.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4.2 Terms of service -->
+      <div>
+        <div class="card-label">4.2 Terms of service (terms.html)</div>
+        <div class="frame wide-frame">
+          <div class="browser-chrome">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <div class="addr">file://…/terms.html  or  https://pulsevitals.app/terms</div>
+          </div>
+          <div class="doc-page">
+            <h1>Terms of service</h1>
+            <p><strong>Effective:</strong> 2026-04-17</p>
+            <h2>Acceptable use</h2>
+            <p>PulseVitals is a measurement tool provided as-is. Use it for sites you own or have permission to audit.</p>
+            <h2>Limitation of liability</h2>
+            <p>The extension measures what your browser exposes; measurements are estimates and can vary with network conditions. PulseVitals is not liable for business decisions made on the basis of its reports.</p>
+            <h2>Attribution</h2>
+            <p>Shared HTML reports generated by PulseVitals include a footer attribution. Preserving the attribution is required.</p>
+            <h2>Changes to these terms</h2>
+            <p>Updates to these terms will be published at the same URL and dated. Continued use after a material change constitutes acceptance.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <h2 class="section">§ 5. Doc-only artifacts (no visual mock)</h2>
+    <p class="section-desc">These ship as text files or CI config and need no visual review. Listed for completeness.</p>
+    <ul style="font-size:0.85rem; color:var(--page-fg); line-height:1.8; max-width:800px;">
+      <li><strong>#12 CI</strong> — <code>.github/workflows/ci.yml</code> runs manifest validation + locale-parity check on every push. Tests jobs are placeholders until #10 / #11 land.</li>
+      <li><strong>#15 Web Store prep</strong> — <code>scripts/package.sh</code> produces a zip artifact suitable for Web Store upload (excluding agent/, prototypes/, CLAUDE.md, CHANGELOG, etc.).</li>
+      <li><strong>#30 Screenshot helper</strong> — <code>assets/store/README.md</code> with guidance + a puppeteer script stub that opens the extension and screenshots the popup at the required Web Store dimensions. Real captures require a headless Chrome run — user-runnable when ready.</li>
+      <li><strong>#32 Permission justifications</strong> — <code>docs/permissions.md</code>, copy ready to paste into the Web Store listing review form.</li>
+      <li><strong>#33 Store listing copy pack</strong> — <code>assets/store/listing.md</code> with title, short description (≤132 chars), long description, category, and keyword notes.</li>
+      <li><strong>#39 LICENSE</strong> — MIT, repo root.</li>
+      <li><strong>#45 Public bug channel</strong> — popup footer gains "Report an issue" link pointing to a configurable URL (placeholder until you pick Tally / Canny / GitHub Discussions).</li>
+      <li><strong>#46 Self-perf budget</strong> — content-script work timed via <code>performance.now()</code> in a new QA check; budget &lt; 20 ms verified before ship.</li>
+      <li><strong>#49 SPA soft-nav</strong> — <code>background.js</code> patches <code>history.pushState</code> / <code>replaceState</code> and listens for <code>popstate</code> to re-capture timings. No visible UI; existing popup flow reads the latest.</li>
+    </ul>
+
+    <p style="margin-top:48px; padding: 20px 24px; background: rgba(225,29,72,0.08); border: 1px solid rgba(225,29,72,0.25); border-radius: 8px; font-size: 0.9rem; line-height: 1.5; max-width: 900px;">
+      <strong>Approval scope.</strong> Ticking "Approved" on this mock authorises me to ship all visible surfaces above and all doc-only artifacts in § 5. Where I've committed to specific copy (insight tags, empty-state strings, banner text), those strings will be routed through <code>_locales/*</code> and ship in English + Spanish. Version will bump <strong>1.7 → 2.0</strong>.
+    </p>
+
+  </div>
+  <script>
+    const root = document.documentElement;
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) root.dataset.theme = "dark";
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+      root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+    });
+  </script>
+</body>
+</html>

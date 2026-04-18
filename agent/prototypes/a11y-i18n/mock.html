@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PulseVitals — v1.7 a11y + i18n (seeds #13, #14)</title>
+<style>
+  :root { --page-bg: #F5F5F7; --page-fg: #0F172A; --page-muted: #475569; --page-border: #E2E8F0; }
+  [data-theme="dark"] { --page-bg: #0A0A0C; --page-fg: #E6EDF3; --page-muted: #94A3B8; --page-border: #1F2933; }
+  html { background: var(--page-bg); }
+  body { margin: 0; padding: 32px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--page-bg); color: var(--page-fg); }
+  .page { max-width: 1320px; margin: 0 auto; }
+  h1.title { font-size: 1.5rem; margin: 0 0 4px; font-weight: 600; }
+  p.intro { color: var(--page-muted); margin: 0 0 24px; font-size: 0.875rem; max-width: 820px; }
+  .toolbar { margin-bottom: 24px; display: flex; gap: 8px; }
+  .toolbar button { padding: 6px 12px; border: 1px solid var(--page-border); background: transparent;
+    color: var(--page-fg); cursor: pointer; border-radius: 6px; font: inherit; font-size: 0.875rem; }
+  .toolbar button:hover { border-color: var(--page-muted); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, 380px); gap: 32px; }
+  .card-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--page-muted); margin-bottom: 8px; }
+  .popup-frame { width: 380px; height: 520px; border: 1px solid var(--page-border); border-radius: 10px;
+    overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.12); background: #FFFFFF; position: relative; }
+  [data-theme="dark"] .popup-frame { background: #0B0F14; }
+
+  /* popup styles */
+  .popup { width: 100%; height: 100%; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #0F172A; background: #FFFFFF; display: flex; flex-direction: column; box-sizing: border-box; }
+  [data-theme="dark"] .popup { color: #E6EDF3; background: #0B0F14; }
+  .popup header { height: 48px; padding: 0 12px 0 16px; display: flex; align-items: center;
+    justify-content: space-between; border-bottom: 1px solid #E2E8F0; gap: 8px; }
+  [data-theme="dark"] .popup header { border-bottom-color: #1F2933; }
+  .popup h1 { margin: 0; font-size: 1.125rem; font-weight: 600; color: inherit; flex: 1; }
+  .popup .iconbtn { padding: 4px 8px; border: 1px solid #E2E8F0; background: transparent; border-radius: 4px;
+    font: inherit; font-size: 0.75rem; color: #475569; cursor: pointer; }
+  [data-theme="dark"] .popup .iconbtn { border-color: #1F2933; color: #94A3B8; }
+  .popup .iconbtn.focused {
+    outline: 2px solid rgba(225, 29, 72, 0.6); outline-offset: 2px;
+  }
+  .popup .subhead { padding: 12px 16px 4px; margin: 0; font-size: 0.875rem; color: #475569; }
+  [data-theme="dark"] .popup .subhead { color: #94A3B8; }
+  .popup .urlbar { margin: 4px 16px 12px; padding: 6px 8px; background: #F5F7FA; border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem; color: #475569;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  [data-theme="dark"] .popup .urlbar { background: #131820; color: #94A3B8; }
+
+  .cwv-bar {
+    margin: 0 16px 12px; padding: 10px 12px; border-radius: 6px;
+    display: flex; align-items: center; gap: 10px; font-size: 0.875rem;
+    background: rgba(220, 38, 38, 0.1); color: #991B1B;
+  }
+  [data-theme="dark"] .cwv-bar { background: rgba(239, 68, 68, 0.15); color: #F87171; }
+  .cwv-bar .pill { width: 14px; height: 14px; border-radius: 50%; background: #DC2626; flex-shrink: 0; }
+  .cwv-bar .label { font-weight: 600; }
+  .cwv-bar .breakdown {
+    flex: 1; text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75rem; opacity: 0.9;
+  }
+
+  .popup .body { flex: 1; overflow-y: auto; padding: 0 16px 12px; }
+  h2.section-heading {
+    margin: 16px 0 6px; padding: 0 0 6px;
+    font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+    color: #475569; border-bottom: 1px solid #E2E8F0;
+  }
+  [data-theme="dark"] h2.section-heading { color: #94A3B8; border-bottom-color: #1F2933; }
+
+  .insight { padding: 10px 4px; border-bottom: 1px solid #E2E8F0; }
+  [data-theme="dark"] .insight { border-bottom-color: #1F2933; }
+  .insight:last-of-type { border-bottom: none; }
+  .insight-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .insight-sev { width: 8px; height: 8px; border-radius: 50%; background: #DC2626; flex-shrink: 0; }
+  .insight-title { font-weight: 600; font-size: 0.875rem; flex: 1; }
+  .insight-savings { font-size: 0.75rem; color: #475569;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  [data-theme="dark"] .insight-savings { color: #94A3B8; }
+  .insight-fix { font-size: 0.75rem; color: #475569; line-height: 1.4; margin: 0; }
+  [data-theme="dark"] .insight-fix { color: #94A3B8; }
+
+  .popup footer { height: 24px; padding: 0 16px; display: flex; align-items: center; justify-content: flex-end;
+    border-top: 1px solid #E2E8F0; }
+  [data-theme="dark"] .popup footer { border-top-color: #1F2933; }
+  .popup .version { font-size: 0.75rem; color: #475569; }
+  [data-theme="dark"] .popup .version { color: #94A3B8; }
+
+  /* Focus-demo overlay arrows */
+  .focus-annotation {
+    position: absolute; top: 12px; right: 12px; padding: 4px 8px;
+    background: #E11D48; color: #FFFFFF; font-size: 0.7rem; border-radius: 4px;
+    font-weight: 600;
+  }
+  .tab-order-hint {
+    position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
+    padding: 4px 10px; background: rgba(15, 23, 42, 0.85); color: #FFFFFF;
+    font-size: 0.7rem; border-radius: 4px;
+  }
+  [data-theme="dark"] .tab-order-hint { background: rgba(230, 237, 243, 0.9); color: #0B0F14; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <h1 class="title">PulseVitals — v1.7 Accessibility pass + i18n</h1>
+    <p class="intro">
+      Seed <code>#13</code> (axe-core 0 violations on the popup) + <code>#14</code> (all user-visible strings routed
+      through <code>chrome.i18n.getMessage</code>, with an English + Spanish locale). This plan is infrastructure —
+      no new features, no new pixels beyond the language swap and a visible focus ring. The prototype shows the popup
+      in English and Spanish plus a keyboard-focus-state annotation.
+    </p>
+    <div class="toolbar"><button id="theme-toggle">Toggle dark / light</button></div>
+
+    <div class="grid">
+
+      <!-- English, default -->
+      <div>
+        <div class="card-label">English — default locale</div>
+        <div class="popup-frame">
+          <div class="popup" lang="en">
+            <header>
+              <h1>PulseVitals</h1>
+              <button class="iconbtn">History</button>
+              <button class="iconbtn">Export</button>
+            </header>
+            <p class="subhead">Performance for this page</p>
+            <div class="urlbar">example.com/a/long/path/to/page.html</div>
+            <div class="cwv-bar">
+              <span class="pill"></span>
+              <span class="label">Core Web Vitals: Poor</span>
+              <span class="breakdown">LCP 4.8s &middot; CLS 0.32 &middot; INP 610ms</span>
+            </div>
+            <div class="body">
+              <h2 class="section-heading">Insights</h2>
+              <div class="insight">
+                <div class="insight-head">
+                  <span class="insight-sev"></span>
+                  <span class="insight-title">Largest image is 2.1 MB</span>
+                  <span class="insight-savings">~2.3 s</span>
+                </div>
+                <p class="insight-fix">Compress <code>hero.jpg</code> to WebP or AVIF and serve a responsive srcset. Target under 200 KB above the fold.</p>
+              </div>
+              <div class="insight">
+                <div class="insight-head">
+                  <span class="insight-sev"></span>
+                  <span class="insight-title">Layout shifts during load (CLS 0.32)</span>
+                  <span class="insight-savings">CLS &minus;0.22</span>
+                </div>
+                <p class="insight-fix">Reserve vertical space for late-loading content with min-height or aspect-ratio. Avoid inserting content above existing content after load.</p>
+              </div>
+              <h2 class="section-heading">Timings</h2>
+              <h2 class="section-heading">Storage</h2>
+              <h2 class="section-heading">Top resources</h2>
+            </div>
+            <footer><span class="version">v1.7</span></footer>
+          </div>
+        </div>
+      </div>
+
+      <!-- Spanish -->
+      <div>
+        <div class="card-label">Español — additional locale</div>
+        <div class="popup-frame">
+          <div class="popup" lang="es">
+            <header>
+              <h1>PulseVitals</h1>
+              <button class="iconbtn">Historial</button>
+              <button class="iconbtn">Exportar</button>
+            </header>
+            <p class="subhead">Rendimiento de esta página</p>
+            <div class="urlbar">example.com/a/long/path/to/page.html</div>
+            <div class="cwv-bar">
+              <span class="pill"></span>
+              <span class="label">Core Web Vitals: Deficiente</span>
+              <span class="breakdown">LCP 4,8s &middot; CLS 0,32 &middot; INP 610ms</span>
+            </div>
+            <div class="body">
+              <h2 class="section-heading">Recomendaciones</h2>
+              <div class="insight">
+                <div class="insight-head">
+                  <span class="insight-sev"></span>
+                  <span class="insight-title">La imagen más grande pesa 2,1 MB</span>
+                  <span class="insight-savings">~2,3 s</span>
+                </div>
+                <p class="insight-fix">Comprime <code>hero.jpg</code> a WebP o AVIF y sirve un srcset responsivo. Apunta a menos de 200 KB en la zona visible.</p>
+              </div>
+              <div class="insight">
+                <div class="insight-head">
+                  <span class="insight-sev"></span>
+                  <span class="insight-title">Cambios de diseño durante la carga (CLS 0,32)</span>
+                  <span class="insight-savings">CLS &minus;0,22</span>
+                </div>
+                <p class="insight-fix">Reserva espacio vertical para contenido que se carga tarde con min-height o aspect-ratio. Evita insertar contenido por encima del existente tras la carga.</p>
+              </div>
+              <h2 class="section-heading">Tiempos</h2>
+              <h2 class="section-heading">Almacenamiento</h2>
+              <h2 class="section-heading">Recursos principales</h2>
+            </div>
+            <footer><span class="version">v1.7</span></footer>
+          </div>
+        </div>
+      </div>
+
+      <!-- A11y focus demo -->
+      <div>
+        <div class="card-label">A11y — keyboard focus demo</div>
+        <div class="popup-frame">
+          <div class="focus-annotation">Tab 2/3</div>
+          <div class="tab-order-hint">Tab order: H1 &rarr; History &rarr; Export &rarr; URL &rarr; CWV bar &rarr; insights &rarr; Back</div>
+          <div class="popup" lang="en">
+            <header>
+              <h1>PulseVitals</h1>
+              <button class="iconbtn focused">History</button>
+              <button class="iconbtn">Export</button>
+            </header>
+            <p class="subhead">Performance for this page</p>
+            <div class="urlbar">example.com/a/long/path/to/page.html</div>
+            <div class="cwv-bar">
+              <span class="pill"></span>
+              <span class="label">Core Web Vitals: Poor</span>
+              <span class="breakdown">LCP 4.8s &middot; CLS 0.32 &middot; INP 610ms</span>
+            </div>
+            <div class="body">
+              <h2 class="section-heading">Insights</h2>
+              <div class="insight">
+                <div class="insight-head">
+                  <span class="insight-sev"></span>
+                  <span class="insight-title">Largest image is 2.1 MB</span>
+                  <span class="insight-savings">~2.3 s</span>
+                </div>
+                <p class="insight-fix">Compress <code>hero.jpg</code> to WebP or AVIF and serve a responsive srcset.</p>
+              </div>
+            </div>
+            <footer><span class="version">v1.7</span></footer>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const root = document.documentElement;
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) root.dataset.theme = "dark";
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+      root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+    });
+  </script>
+</body>
+</html>

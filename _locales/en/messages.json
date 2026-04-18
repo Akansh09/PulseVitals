@@ -1,0 +1,282 @@
+{
+  "extensionName": { "message": "PulseVitals" },
+  "extensionDescription": { "message": "Instant Core Web Vitals, plain-English fixes, and shareable reports for every page you visit." },
+
+  "subheadCurrent": { "message": "Performance for this page" },
+  "subheadCurrentMobile": { "message": "Performance for this page \u00b7 Mobile emulation" },
+  "subheadHistoryList": {
+    "message": "Recent runs for $ORIGIN$",
+    "placeholders": { "origin": { "content": "$1", "example": "example.com" } }
+  },
+  "subheadHistoryDetail": {
+    "message": "Snapshot \u00b7 $WHEN$",
+    "placeholders": { "when": { "content": "$1", "example": "Yesterday, 18:44" } }
+  },
+
+  "buttonHistory": { "message": "History" },
+  "buttonExport": { "message": "Export" },
+  "buttonShare": { "message": "Share" },
+  "buttonBack": { "message": "Back" },
+  "buttonBackToList": { "message": "Back to list" },
+  "buttonReportIssue": { "message": "Report an issue" },
+  "buttonOptions": { "message": "Options" },
+  "titleHistoryBtn": { "message": "View past runs for this origin" },
+  "titleExportBtn": { "message": "Download JSON and CSV of the current report" },
+  "titleShareBtn": { "message": "Download a shareable HTML report" },
+  "titleMobileBtn": { "message": "Re-run as mobile" },
+  "ariaLabelBackToCurrent": { "message": "Back to performance for this page" },
+  "ariaLabelBackToList": { "message": "Back to recent runs list" },
+
+  "stateMeasuring": { "message": "Measuring\u2026" },
+  "stateNoDataLine1": { "message": "No performance data yet." },
+  "stateNoDataLine2": { "message": "Navigate to a web page and reopen." },
+  "stateErrorLine1": { "message": "Couldn't load timings for this tab." },
+  "stateErrorLine2": { "message": "Try reloading the page." },
+  "stateUnsupported": { "message": "PulseVitals can't read this page type." },
+  "stateDenied": { "message": "This origin is on your denylist. Update it in Options." },
+  "stateNoHistoryLine1": { "message": "No past runs yet for this origin." },
+  "stateNoHistoryLine2": { "message": "Reload the page and come back." },
+
+  "toastExportDone": { "message": "Downloaded pulsevitals-report.json + .csv" },
+  "toastShareDone": { "message": "Downloaded pulsevitals-report.html" },
+  "toastNothingToExport": { "message": "Nothing to export yet" },
+
+  "sectionInsights": { "message": "Insights" },
+  "sectionThirdParty": { "message": "Third-party origins" },
+  "sectionSeoChecks": { "message": "SEO checks" },
+  "sectionHealthScore": { "message": "Health score" },
+  "sectionA11yIssues": { "message": "Accessibility issues" },
+  "sectionRumHistogram": { "message": "Your session \u00b7 LCP distribution" },
+  "sectionTimings": { "message": "Timings" },
+  "sectionStorage": { "message": "Storage" },
+  "sectionTopResources": { "message": "Top resources" },
+  "sectionPaintAndCwv": { "message": "Paint & Core Web Vitals" },
+
+  "thirdPartyEmpty": { "message": "No third-party resources detected on this page." },
+  "seoUnavailable": { "message": "SEO signals unavailable for this page." },
+
+  "seoCheck_title": { "message": "Title tag" },
+  "seoCheck_metaDesc": { "message": "Meta description" },
+  "seoCheck_h1": { "message": "Exactly one <h1>" },
+  "seoCheck_canonical": { "message": "Canonical URL" },
+  "seoCheck_ogImage": { "message": "Open Graph image" },
+  "seoCheck_viewport": { "message": "Viewport meta" },
+  "seoCheck_jsonld": { "message": "Structured data (JSON-LD)" },
+
+  "healthScoreKicker": { "message": "Overall" },
+  "healthScoreSummary": {
+    "message": "CWV $VERDICT$ \u00b7 $COUNT$ a11y issue(s)",
+    "placeholders": {
+      "verdict": { "content": "$1", "example": "good" },
+      "count": { "content": "$2", "example": "3" }
+    }
+  },
+  "healthScoreFormula": { "message": "Score = max(0, 100 \u2212 10\u00d7a11y) \u00d7 CWV multiplier." },
+
+  "rumMedian": { "message": "Median" },
+  "rumP95": { "message": "p95" },
+  "rumSamples": { "message": "Samples" },
+
+  "tableEvent": { "message": "Event" },
+  "tableTime": { "message": "Time" },
+  "tableDelta": { "message": "\u0394 (ms)" },
+  "tableResource": { "message": "Resource" },
+  "tableSize": { "message": "Size" },
+  "tableDuration": { "message": "Duration" },
+
+  "storageLocal": { "message": "localStorage" },
+  "storageSession": { "message": "sessionStorage" },
+  "storageOriginTotal": { "message": "Origin total (estimate)" },
+  "valueUnavailable": { "message": "Unavailable" },
+  "noResourcesCaptured": { "message": "No resources captured" },
+
+  "insightsEmptyPassing": { "message": "No actionable issues detected. Core Web Vitals are passing \u2014 keep it up." },
+  "insightsEmptyMeasuring": { "message": "Interact with the page (scroll, click) to populate CLS and INP. LCP usually arrives in the first second." },
+
+  "bannerBudgetExceeded": { "message": "Budget exceeded for this page" },
+
+  "whatsnewTag": {
+    "message": "New in v$VERSION$",
+    "placeholders": { "version": { "content": "$1", "example": "2.0" } }
+  },
+  "whatsnewTitle": { "message": "Ship-readiness release" },
+  "whatsnewBody": { "message": "Third-party breakdown, SEO checks, platform-aware tips, RUM histogram, budgets, and a shareable HTML export. Full list in CHANGELOG." },
+  "whatsnewDismiss": { "message": "Got it" },
+
+  "consentSubhead": { "message": "Welcome" },
+  "consentTitle": { "message": "Welcome to PulseVitals" },
+  "consentLead": { "message": "Before we start measuring, here's what PulseVitals does with your data:" },
+  "consentPoint1": { "message": "Measures only the active tab's performance data." },
+  "consentPoint2": { "message": "Stores recent-run history on your device in browser storage." },
+  "consentPoint3": { "message": "Never sends data to any server. No telemetry." },
+  "consentPoint4": { "message": "You can clear history anytime from Options." },
+  "consentCta": { "message": "I understand \u2014 continue" },
+
+  "onboardingSubhead": { "message": "You're set up" },
+  "onboardingTitle": { "message": "You're ready" },
+  "onboardingLead": { "message": "Three things to try:" },
+  "onboardingPoint1": { "message": "Glance at the icon \u2014 color tells you if this page passes Core Web Vitals." },
+  "onboardingPoint2": { "message": "Open the popup for plain-English fixes and a third-party breakdown." },
+  "onboardingPoint3": { "message": "Hit Share to send a one-file report to a teammate or client." },
+  "onboardingCta": { "message": "Open report" },
+  "onboardingSkip": { "message": "Skip" },
+
+  "relativeJustNow": { "message": "Just now" },
+  "relativeMinutesAgo": {
+    "message": "$COUNT$ min ago",
+    "placeholders": { "count": { "content": "$1", "example": "5" } }
+  },
+  "relativeToday": {
+    "message": "Today, $TIME$",
+    "placeholders": { "time": { "content": "$1", "example": "14:30" } }
+  },
+  "relativeYesterday": {
+    "message": "Yesterday, $TIME$",
+    "placeholders": { "time": { "content": "$1", "example": "18:44" } }
+  },
+  "relativeDaysAgo": {
+    "message": "$COUNT$ days ago",
+    "placeholders": { "count": { "content": "$1", "example": "3" } }
+  },
+
+  "historyStatLcp": {
+    "message": "LCP $VALUE$ ms",
+    "placeholders": { "value": { "content": "$1", "example": "1,200" } }
+  },
+  "historyStatDom": {
+    "message": "DOM $VALUE$ ms",
+    "placeholders": { "value": { "content": "$1", "example": "783" } }
+  },
+  "historyStatTop": {
+    "message": "$VALUE$ top",
+    "placeholders": { "value": { "content": "$1", "example": "412 KB" } }
+  },
+  "historyNoMetrics": { "message": "No metrics" },
+
+  "insightSlowLcpTitle": {
+    "message": "Slow Largest Contentful Paint ($VALUE$s)",
+    "placeholders": { "value": { "content": "$1", "example": "4.8" } }
+  },
+  "insightSlowLcpFix": {
+    "message": "Optimize the LCP element \u2014 usually the hero image or above-the-fold text. Preload it, compress images to WebP or AVIF, and reduce CSS or JS blocking before the first paint."
+  },
+  "insightLargeImageTitle": {
+    "message": "Largest image is $SIZE$",
+    "placeholders": { "size": { "content": "$1", "example": "2.1 MB" } }
+  },
+  "insightLargeImageFix": {
+    "message": "Compress $FILENAME$ to WebP or AVIF and serve a responsive srcset. Target under 200 KB above the fold.",
+    "placeholders": { "filename": { "content": "$1", "example": "hero.jpg" } }
+  },
+  "insightPoorClsTitle": {
+    "message": "Layout shifts during load (CLS $VALUE$)",
+    "placeholders": { "value": { "content": "$1", "example": "0.32" } }
+  },
+  "insightPoorClsFix": {
+    "message": "Reserve vertical space for late-loading content (ads, banners, iframes) with min-height or aspect-ratio. Avoid inserting content above existing content after load."
+  },
+  "insightPoorInpTitle": {
+    "message": "Slow interactions (INP $VALUE$ms)",
+    "placeholders": { "value": { "content": "$1", "example": "610" } }
+  },
+  "insightPoorInpFix": {
+    "message": "Break up long event handlers with requestIdleCallback or setTimeout(..., 0). Defer analytics and tag-manager scripts with async or defer."
+  },
+  "insightSlowTtfbTitle": {
+    "message": "Slow server response (TTFB $VALUE$ms)",
+    "placeholders": { "value": { "content": "$1", "example": "780" } }
+  },
+  "insightSlowTtfbFix": {
+    "message": "Cache HTML at a CDN edge, move expensive work out of the request path, or upgrade hosting. Target TTFB under 300 ms."
+  },
+  "insightLargeJsTitle": {
+    "message": "Large JavaScript payload ($SIZE$)",
+    "placeholders": { "size": { "content": "$1", "example": "1.1 MB" } }
+  },
+  "insightLargeJsFix": {
+    "message": "Code-split with dynamic import(), remove unused libraries, and tree-shake. Ship modern ES for evergreen browsers."
+  },
+  "insightLargeTotalTitle": {
+    "message": "Page transferred $SIZE$",
+    "placeholders": { "size": { "content": "$1", "example": "3.2 MB" } }
+  },
+  "insightLargeTotalFix": {
+    "message": "Audit third-party tags and remove unused resources. Compress text assets with Brotli. Lazy-load below-the-fold images."
+  },
+  "insightSlowDomTitle": {
+    "message": "Slow DOM completion ($VALUE$s)",
+    "placeholders": { "value": { "content": "$1", "example": "5.2" } }
+  },
+  "insightSlowDomFix": {
+    "message": "Defer non-critical scripts, inline critical CSS, and reduce synchronous JavaScript that blocks parsing."
+  },
+
+  "cwvGood": { "message": "Core Web Vitals: Good" },
+  "cwvWarn": { "message": "Core Web Vitals: Needs improvement" },
+  "cwvBad": { "message": "Core Web Vitals: Poor" },
+  "cwvMeasuring": { "message": "Core Web Vitals: Measuring\u2026" },
+
+  "sectionWaterfall": {
+    "message": "Waterfall \u00b7 $SHOWN$ of $TOTAL$ resources",
+    "placeholders": {
+      "shown": { "content": "$1", "example": "10" },
+      "total": { "content": "$2", "example": "42" }
+    }
+  },
+  "waterfallLegendScript": { "message": "script" },
+  "waterfallLegendCss": { "message": "css" },
+  "waterfallLegendImage": { "message": "image" },
+  "waterfallLegendXhr": { "message": "xhr / fetch" },
+  "waterfallLegendOther": { "message": "other" },
+
+  "sectionConsoleErrors": { "message": "Console errors" },
+  "consoleErrorsNone": { "message": "None" },
+  "consoleErrorsEmpty": { "message": "No JS errors captured during this page view." },
+
+  "historyCompareCta": {
+    "message": "Compare ($COUNT$ selected)",
+    "placeholders": { "count": { "content": "$1", "example": "2" } }
+  },
+  "historyCompareDisabled": { "message": "Select 2 snapshots to compare" },
+  "historySelectedOfTotal": {
+    "message": "$SELECTED$ of $TOTAL$ selected",
+    "placeholders": {
+      "selected": { "content": "$1", "example": "2" },
+      "total": { "content": "$2", "example": "5" }
+    }
+  },
+
+  "subheadDiff": { "message": "Diff \u00b7 2 snapshots" },
+  "ariaLabelBackDiff": { "message": "Back to recent runs list" },
+  "diffSectionCwv": { "message": "Core Web Vitals" },
+  "diffSectionTransfer": { "message": "Transfer" },
+  "diffSectionChanged": { "message": "Changed resources" },
+  "diffDeltaSame": { "message": "same" },
+  "diffNoChanges": { "message": "No measurable differences between these two snapshots." },
+
+  "annoLabel": { "message": "Note" },
+  "annoPlaceholder": { "message": "Add a note for this snapshot\u2026" },
+  "annoSaved": { "message": "Saved" },
+
+  "imageInsightBadge": { "message": "Image" },
+  "insightImagesNonModernTitle": {
+    "message": "$COUNT$ image(s) could be WebP / AVIF",
+    "placeholders": { "count": { "content": "$1", "example": "3" } }
+  },
+  "insightImagesNonModernFix": {
+    "message": "Convert JPEG / PNG hero images to WebP or AVIF. Modern formats typically cut 30–60% off transfer size."
+  },
+  "insightImagesMissingLazyTitle": {
+    "message": "$COUNT$ image(s) below the fold missing loading=\"lazy\"",
+    "placeholders": { "count": { "content": "$1", "example": "5" } }
+  },
+  "insightImagesMissingLazyFix": {
+    "message": "Add loading=\"lazy\" to off-screen images so the browser defers them until needed."
+  },
+  "insightImagesMissingSrcsetTitle": {
+    "message": "Hero image has no responsive srcset"
+  },
+  "insightImagesMissingSrcsetFix": {
+    "message": "Serve smaller variants via srcset + sizes so mobile users don't download the desktop hero."
+  }
+}

@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  validate:
+    name: Validate manifest + locales
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate manifest JSON
+        run: |
+          python3 -c "
+          import json, sys
+          m = json.load(open('manifest.json'))
+          assert m.get('manifest_version') == 3, 'expected MV3'
+          assert 'version' in m and m['version'], 'missing version'
+          assert m.get('default_locale') == 'en', 'missing default_locale'
+          assert m.get('background', {}).get('service_worker'), 'missing service_worker'
+          print('manifest ok  version =', m['version'])
+          "
+
+      - name: Validate locale parity
+        run: |
+          python3 -c "
+          import json, sys, pathlib
+          locale_dir = pathlib.Path('_locales')
+          locales = {d.name: json.load(open(d / 'messages.json')) for d in locale_dir.iterdir() if d.is_dir()}
+          assert 'en' in locales, 'missing en locale'
+          en_keys = set(locales['en'].keys())
+          for name, data in locales.items():
+              extra = set(data.keys()) - en_keys
+              missing = en_keys - set(data.keys())
+              assert not extra, f'{name}: extra keys not in en: {extra}'
+              assert not missing, f'{name}: missing keys: {missing}'
+              print(f'{name}: {len(data)} keys, parity OK')
+          "
+
+      - name: Check required files exist
+        run: |
+          for f in manifest.json popup.html popup.js background.js service-worker.js \
+                   LICENSE privacy.html terms.html \
+                   docs/permissions.md assets/store/listing.md; do
+            test -f "$f" || { echo "missing $f"; exit 1; }
+          done
+          echo "all required files present"
+
+  placeholder-tests:
+    name: Tests (placeholder)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No test suite yet
+        run: |
+          echo "Unit tests tracked under seed #10, functional tests under seed #11."
+          echo "Both are out of scope for v2.0. This job is a placeholder until those land."
